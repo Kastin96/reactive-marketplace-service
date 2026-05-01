@@ -36,6 +36,5 @@ app:
   security:
     jwt:
       issuer: ${JWT_ISSUER:reactive-marketplace-service}
-      secret: ${JWT_SECRET:change-me-in-production}
-      access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:15m}
-      refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:7d}
+      secret: ${JWT_SECRET:change-me-in-production-change-me-now}
+      expiration: ${JWT_EXPIRATION:15m}

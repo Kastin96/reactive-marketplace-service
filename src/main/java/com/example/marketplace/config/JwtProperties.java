@@ -4,6 +4,7 @@ import java.time.Duration;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import org.hibernate.validator.constraints.time.DurationMin;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
@@ -12,8 +13,7 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "app.security.jwt")
 public record JwtProperties(
     @NotBlank String issuer,
-    @NotBlank String secret,
-    @NotNull @DurationMin(seconds = 1) Duration accessTokenExpiration,
-    @NotNull @DurationMin(seconds = 1) Duration refreshTokenExpiration
+    @NotBlank @Size(min = 32) String secret,
+    @NotNull @DurationMin(seconds = 1) Duration expiration
 ) {
 }
