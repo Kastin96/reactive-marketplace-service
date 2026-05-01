@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: reactive-marketplace-service
+  r2dbc:
+    url: ${SPRING_R2DBC_URL:r2dbc:postgresql://localhost:5432/reactive_marketplace}
+    username: ${SPRING_R2DBC_USERNAME:marketplace}
+    password: ${SPRING_R2DBC_PASSWORD:marketplace}
+  flyway:
+    enabled: true
+    url: ${SPRING_FLYWAY_URL:jdbc:postgresql://localhost:5432/reactive_marketplace}
+    user: ${SPRING_FLYWAY_USER:marketplace}
+    password: ${SPRING_FLYWAY_PASSWORD:marketplace}
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: ${spring.application.name}
+    description: Reactive marketplace backend service
+
+app:
+  security:
+    jwt:
+      issuer: ${JWT_ISSUER:reactive-marketplace-service}
+      secret: ${JWT_SECRET:change-me-in-production}
+      access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:15m}
+      refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:7d}
