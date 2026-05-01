@@ -3,7 +3,7 @@ package com.example.marketplace;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-final class PostgresTestContainerConfig {
+public final class PostgresTestContainerConfig {
 
   private static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine")
       .withDatabaseName("marketplace_test")
@@ -13,7 +13,7 @@ final class PostgresTestContainerConfig {
   private PostgresTestContainerConfig() {
   }
 
-  static void configure(DynamicPropertyRegistry registry) {
+  public static void configure(DynamicPropertyRegistry registry) {
     POSTGRES.start();
 
     registry.add("spring.r2dbc.url", PostgresTestContainerConfig::r2dbcUrl);
