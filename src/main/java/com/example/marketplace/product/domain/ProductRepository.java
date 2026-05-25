@@ -15,5 +15,7 @@ public interface ProductRepository {
 
   Flux<Product> findBySellerId(UUID sellerId);
 
+  Mono<Product> decreaseStockIfAvailable(UUID productId, int quantity);
+
   Mono<Boolean> existsById(UUID id);
 }

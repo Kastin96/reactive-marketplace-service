@@ -138,11 +138,9 @@ public class OrderService {
     return productRepository.findById(itemRequest.productId())
         .switchIfEmpty(Mono.error(() -> new ProductNotFoundException(itemRequest.productId())))
         .flatMap(product -> validateOrderableProduct(product, itemRequest.quantity()))
-        .map(product -> {
-          product.decreaseStock(itemRequest.quantity());
-          return product;
-        })
-        .flatMap(productRepository::save)
+        .flatMap(product -> productRepository.decreaseStockIfAvailable(product.getId(), itemRequest.quantity())
+            .switchIfEmpty(Mono.error(() -> new InsufficientStockException(product.getId())))
+        )
         .map(product -> OrderItem.createNew(
             orderId,
             product.getId(),

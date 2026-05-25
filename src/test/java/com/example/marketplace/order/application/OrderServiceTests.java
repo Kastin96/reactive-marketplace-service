@@ -30,6 +30,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -57,7 +59,7 @@ class OrderServiceTests {
     Product product = activeProduct(BigDecimal.valueOf(25), 10);
     when(currentUserProvider.currentUserId()).thenReturn(Mono.just(customerId));
     when(productRepository.findById(product.getId())).thenReturn(Mono.just(product));
-    when(productRepository.save(product)).thenReturn(Mono.just(product));
+    when(productRepository.decreaseStockIfAvailable(product.getId(), 2)).thenReturn(Mono.just(product));
     when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
 
     StepVerifier.create(orderService.createOrder(createRequest(product.getId(), 2)))
@@ -110,7 +112,7 @@ class OrderServiceTests {
     Product product = activeProduct(BigDecimal.valueOf(12.50), 10);
     when(currentUserProvider.currentUserId()).thenReturn(Mono.just(UUID.randomUUID()));
     when(productRepository.findById(product.getId())).thenReturn(Mono.just(product));
-    when(productRepository.save(product)).thenReturn(Mono.just(product));
+    when(productRepository.decreaseStockIfAvailable(product.getId(), 3)).thenReturn(Mono.just(product));
     when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
 
     StepVerifier.create(orderService.createOrder(createRequest(product.getId(), 3)))
@@ -123,7 +125,7 @@ class OrderServiceTests {
     Product product = activeProduct(BigDecimal.valueOf(19.99), 5);
     when(currentUserProvider.currentUserId()).thenReturn(Mono.just(UUID.randomUUID()));
     when(productRepository.findById(product.getId())).thenReturn(Mono.just(product));
-    when(productRepository.save(product)).thenReturn(Mono.just(product));
+    when(productRepository.decreaseStockIfAvailable(product.getId(), 1)).thenReturn(Mono.just(product));
     when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
 
     StepVerifier.create(orderService.createOrder(createRequest(product.getId(), 1)))
@@ -136,12 +138,26 @@ class OrderServiceTests {
     Product product = activeProduct(BigDecimal.TEN, 5);
     when(currentUserProvider.currentUserId()).thenReturn(Mono.just(UUID.randomUUID()));
     when(productRepository.findById(product.getId())).thenReturn(Mono.just(product));
-    when(productRepository.save(product)).thenReturn(Mono.just(product));
+    when(productRepository.decreaseStockIfAvailable(product.getId(), 1)).thenReturn(Mono.just(product));
     when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
 
     StepVerifier.create(orderService.createOrder(createRequest(product.getId(), 1)))
         .assertNext(response -> assertThat(response.items().getFirst().productName()).isEqualTo(product.getName()))
         .verifyComplete();
+  }
+
+  @Test
+  void orderCreationFailsWhenAtomicStockDecreaseFails() {
+    Product product = activeProduct(BigDecimal.TEN, 2);
+    when(currentUserProvider.currentUserId()).thenReturn(Mono.just(UUID.randomUUID()));
+    when(productRepository.findById(product.getId())).thenReturn(Mono.just(product));
+    when(productRepository.decreaseStockIfAvailable(product.getId(), 2)).thenReturn(Mono.empty());
+
+    StepVerifier.create(orderService.createOrder(createRequest(product.getId(), 2)))
+        .expectError(InsufficientStockException.class)
+        .verify();
+
+    verify(orderRepository, never()).save(any(Order.class));
   }
 
   @Test

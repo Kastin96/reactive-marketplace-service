@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Repository
@@ -46,6 +47,16 @@ class ProductRepositoryAdapter implements ProductRepository {
   public Flux<Product> findBySellerId(UUID sellerId) {
     return repository.findBySellerId(sellerId)
         .map(this::toDomain);
+  }
+
+  @Override
+  public Mono<Product> decreaseStockIfAvailable(UUID productId, int quantity) {
+    if (quantity <= 0) {
+      return Mono.error(new IllegalArgumentException("Quantity must be greater than zero"));
+    }
+
+    return repository.decreaseStockIfAvailable(productId, quantity, LocalDateTime.now())
+        .flatMap(updatedRows -> updatedRows > 0 ? findById(productId) : Mono.empty());
   }
 
   @Override

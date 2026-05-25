@@ -16,9 +16,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -100,7 +102,51 @@ class ProductRepositoryIntegrationTests {
         .verify();
   }
 
+  @Test
+  void decreaseStockIfAvailableDecreasesStockAtomically() {
+    Product product = newProduct();
+    product.activate();
+
+    StepVerifier.create(productRepository.save(product)
+            .then(productRepository.decreaseStockIfAvailable(product.getId(), 3)))
+        .assertNext(updated -> {
+          assertThat(updated.getId()).isEqualTo(product.getId());
+          assertThat(updated.getStockQuantity()).isEqualTo(4);
+          assertThat(updated.getStatus()).isEqualTo(ProductStatus.ACTIVE);
+        })
+        .verifyComplete();
+  }
+
+  @Test
+  void decreaseStockIfAvailableAllowsOnlyAvailableStockAcrossMultipleReservations() {
+    Product product = newProductWithStock(1);
+    product.activate();
+
+    StepVerifier.create(productRepository.save(product)
+            .thenMany(Flux.range(0, 2)
+                .flatMap(index -> productRepository.decreaseStockIfAvailable(product.getId(), 1)
+                    .map(updated -> true)
+                    .defaultIfEmpty(false), 2)
+            )
+            .collectList()
+            .flatMap(reservations -> productRepository.findById(product.getId())
+                .map(updated -> new ReservationResult(reservations, updated))
+            ))
+        .assertNext(result -> {
+          List<Boolean> reservations = result.reservations();
+          Product updated = result.product();
+
+          assertThat(reservations).containsExactlyInAnyOrder(true, false);
+          assertThat(updated.getStockQuantity()).isZero();
+        })
+        .verifyComplete();
+  }
+
   private Product newProduct() {
+    return newProductWithStock(7);
+  }
+
+  private Product newProductWithStock(int stockQuantity) {
     User seller = saveSeller();
     Category category = saveCategory();
 
@@ -110,7 +156,7 @@ class ProductRepositoryIntegrationTests {
         "product-" + UUID.randomUUID(),
         "Repository product",
         BigDecimal.valueOf(19.99),
-        7
+        stockQuantity
     );
   }
 
@@ -136,5 +182,8 @@ class ProductRepositoryIntegrationTests {
         .verifyComplete();
 
     return category;
+  }
+
+  private record ReservationResult(List<Boolean> reservations, Product product) {
   }
 }
