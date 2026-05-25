@@ -49,23 +49,33 @@ public class JwtTokenProvider {
 
   public boolean isValid(String token) {
     try {
-      parseClaims(token);
+      extractAuthenticationClaims(token);
       return true;
     } catch (JwtException | IllegalArgumentException exception) {
       return false;
     }
   }
 
+  public JwtAuthenticationClaims extractAuthenticationClaims(String token) {
+    Claims claims = parseClaims(token);
+
+    return new JwtAuthenticationClaims(
+        UUID.fromString(claims.get(USER_ID_CLAIM, String.class)),
+        claims.get(EMAIL_CLAIM, String.class),
+        UserRole.valueOf(claims.get(ROLE_CLAIM, String.class))
+    );
+  }
+
   public UUID extractUserId(String token) {
-    return UUID.fromString(parseClaims(token).get(USER_ID_CLAIM, String.class));
+    return extractAuthenticationClaims(token).userId();
   }
 
   public String extractEmail(String token) {
-    return parseClaims(token).get(EMAIL_CLAIM, String.class);
+    return extractAuthenticationClaims(token).email();
   }
 
   public UserRole extractRole(String token) {
-    return UserRole.valueOf(parseClaims(token).get(ROLE_CLAIM, String.class));
+    return extractAuthenticationClaims(token).role();
   }
 
   public long expiresInSeconds() {
