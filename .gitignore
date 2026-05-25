@@ -3,61 +3,56 @@
 # ============================================
 .gradle/
 build/
-!gradle/wrapper/gradle-wrapper.jar
-!gradle/wrapper/gradle-wrapper.properties
+out/
 
-# Gradle build outputs
 **/build/
 **/out/
-
-# Gradle caches
-.gradle/
 **/.gradle/
+
+# Keep Gradle Wrapper
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
 
 # ============================================
 # IntelliJ IDEA
 # ============================================
-# User-specific files
-.idea/**/workspace.xml
-.idea/**/tasks.xml
-.idea/**/usage.statistics.xml
-.idea/**/dictionaries
-.idea/**/shelf/
-
-# Ignore IDE settings EXCEPT code styles
-.idea/*
-!.idea/codeStyles
-!.idea/codeStyles/*
-!.idea/inspectionProfiles
-!.idea/inspectionProfiles/*
-
-# jOOQ generated sources
-/build/generated/
-/**/build/generated/
-
-# Caches
+.idea/
 *.iml
 *.iws
+*.ipr
 
 # ============================================
-# Kotlin / Java / Groovy
+# Java / Kotlin / Groovy
 # ============================================
-# Compiled class files
 *.class
+*.jar
+*.war
+*.ear
 
-# Log files
+# ============================================
+# Logs
+# ============================================
 *.log
+logs/
 
+# ============================================
 # Temporary files
+# ============================================
 *.tmp
+*.temp
 *.swp
+*.swo
+
+# ============================================
+# Environment / Secrets
+# ============================================
+.env
+.env.*
+*.local
 
 # ============================================
 # OS-specific
 # ============================================
-# macOS
 .DS_Store
-
-# Windows
 Thumbs.db
-
+desktop.ini
