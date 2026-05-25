@@ -1,6 +1,10 @@
 package com.example.marketplace.product.api;
 
+import com.example.marketplace.config.OpenApiConfig;
 import com.example.marketplace.product.application.ProductService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,17 +23,28 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "Products", description = "Product catalog and seller/admin product management endpoints.")
 public class ProductController {
 
   private final ProductService productService;
 
   @PostMapping("/api/v1/seller/products")
   @ResponseStatus(HttpStatus.CREATED)
+  @Operation(
+      summary = "Create product",
+      description = "Requires SELLER role. New products are created as DRAFT.",
+      security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH_SCHEME)
+  )
   public Mono<ProductResponse> createProduct(@Valid @RequestBody CreateProductRequest request) {
     return productService.createProduct(request);
   }
 
   @PutMapping("/api/v1/seller/products/{productId}")
+  @Operation(
+      summary = "Update own product",
+      description = "Requires SELLER role. Sellers can update only products they own.",
+      security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH_SCHEME)
+  )
   public Mono<ProductResponse> updateOwnProduct(
       @PathVariable UUID productId,
       @Valid @RequestBody UpdateProductRequest request
@@ -38,26 +53,51 @@ public class ProductController {
   }
 
   @GetMapping("/api/v1/seller/products")
+  @Operation(
+      summary = "List own products",
+      description = "Requires SELLER role.",
+      security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH_SCHEME)
+  )
   public Flux<ProductResponse> getCurrentSellerProducts() {
     return productService.getCurrentSellerProducts();
   }
 
   @GetMapping("/api/v1/products")
+  @Operation(
+      summary = "List active products",
+      description = "Requires authenticated CUSTOMER, SELLER, or ADMIN user.",
+      security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH_SCHEME)
+  )
   public Flux<ProductResponse> getActiveProducts() {
     return productService.getActiveProducts();
   }
 
   @GetMapping("/api/v1/products/{productId}")
+  @Operation(
+      summary = "Get active product",
+      description = "Requires authenticated CUSTOMER, SELLER, or ADMIN user. Inactive products are hidden.",
+      security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH_SCHEME)
+  )
   public Mono<ProductResponse> getProductById(@PathVariable UUID productId) {
     return productService.getProductById(productId);
   }
 
   @PatchMapping("/api/v1/admin/products/{productId}/activate")
+  @Operation(
+      summary = "Activate product",
+      description = "Requires ADMIN role.",
+      security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH_SCHEME)
+  )
   public Mono<ProductResponse> activateProduct(@PathVariable UUID productId) {
     return productService.activateProduct(productId);
   }
 
   @PatchMapping("/api/v1/admin/products/{productId}/deactivate")
+  @Operation(
+      summary = "Deactivate product",
+      description = "Requires ADMIN role.",
+      security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH_SCHEME)
+  )
   public Mono<ProductResponse> deactivateProduct(@PathVariable UUID productId) {
     return productService.deactivateProduct(productId);
   }

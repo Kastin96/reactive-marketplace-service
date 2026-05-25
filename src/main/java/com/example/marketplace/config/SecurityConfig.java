@@ -45,6 +45,13 @@ public class SecurityConfig {
         .addFilterAt(jwtAuthenticationWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)
         .authorizeExchange(exchanges -> exchanges
             .pathMatchers(HttpMethod.GET, "/actuator/health", "/actuator/info").permitAll()
+            .pathMatchers(HttpMethod.GET,
+                "/v3/api-docs",
+                "/v3/api-docs/**",
+                "/swagger-ui.html",
+                "/swagger-ui/**",
+                "/webjars/swagger-ui/**"
+            ).permitAll()
             .pathMatchers(HttpMethod.POST,
                 "/api/v1/auth/register/customer",
                 "/api/v1/auth/register/seller",
