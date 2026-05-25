@@ -16,6 +16,4 @@ public interface OrderRepository {
   Flux<Order> findBySellerId(UUID sellerId);
 
   Flux<Order> findAll();
-
-  Mono<Boolean> existsById(UUID id);
 }

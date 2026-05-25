@@ -19,13 +19,4 @@ public class UserService {
     return userRepository.findById(id)
         .switchIfEmpty(Mono.error(() -> new UserNotFoundException("User not found with id: " + id)));
   }
-
-  public Mono<User> getByEmail(String email) {
-    return userRepository.findByEmail(email)
-        .switchIfEmpty(Mono.error(() -> new UserNotFoundException("User not found with email: " + email)));
-  }
-
-  public Mono<Boolean> existsByEmail(String email) {
-    return userRepository.existsByEmail(email);
-  }
 }

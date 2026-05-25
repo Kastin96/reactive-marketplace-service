@@ -75,6 +75,28 @@ class AuthControllerIntegrationTests {
   }
 
   @Test
+  void duplicateRegistrationReturnsConflict() {
+    String email = uniqueEmail("duplicate");
+    User user = User.createNewActiveUser(email, passwordEncoder.encode("password123"), UserRole.CUSTOMER);
+
+    StepVerifier.create(userRepository.save(user))
+        .expectNextMatches(saved -> saved.getId().equals(user.getId()))
+        .verifyComplete();
+
+    webTestClient.post()
+        .uri("/api/v1/auth/register/customer")
+        .contentType(MediaType.APPLICATION_JSON)
+        .bodyValue(new RegisterRequest(email, "password123"))
+        .exchange()
+        .expectStatus().isEqualTo(409)
+        .expectBody()
+        .jsonPath("$.status").isEqualTo(409)
+        .jsonPath("$.error").isEqualTo("Conflict")
+        .jsonPath("$.message").isEqualTo("Email already exists: " + email)
+        .jsonPath("$.path").isEqualTo("/api/v1/auth/register/customer");
+  }
+
+  @Test
   void loginReturnsToken() {
     String email = uniqueEmail("login");
     User user = User.createNewActiveUser(email, passwordEncoder.encode("password123"), UserRole.CUSTOMER);

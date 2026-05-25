@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DuplicateKeyException;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -62,6 +63,20 @@ class CategoryServiceTests {
 
     StepVerifier.create(categoryService.createCategory(request))
         .expectError(DuplicateCategoryNameException.class)
+        .verify();
+  }
+
+  @Test
+  void createCategoryMapsDuplicateNameConstraintToConflictException() {
+    CreateCategoryRequest request = new CreateCategoryRequest("Electronics", null);
+    when(categoryRepository.existsByNameIgnoreCase("Electronics")).thenReturn(Mono.just(false));
+    when(categoryRepository.save(any(Category.class))).thenReturn(Mono.error(new DuplicateKeyException("uk_categories_name")));
+
+    StepVerifier.create(categoryService.createCategory(request))
+        .expectErrorSatisfies(error -> {
+          assertThat(error).isInstanceOf(DuplicateCategoryNameException.class);
+          assertThat(error).hasMessage("Category name already exists: Electronics");
+        })
         .verify();
   }
 

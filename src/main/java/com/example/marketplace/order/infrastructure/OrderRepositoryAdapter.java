@@ -65,11 +65,6 @@ class OrderRepositoryAdapter implements OrderRepository {
         .flatMap(this::withItems);
   }
 
-  @Override
-  public Mono<Boolean> existsById(UUID id) {
-    return orderRepository.existsById(id);
-  }
-
   private Mono<Order> withItems(OrderEntity orderEntity) {
     return orderItemRepository.findByOrderId(orderEntity.id())
         .map(this::toDomain)

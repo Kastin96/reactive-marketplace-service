@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import reactor.core.publisher.Mono;
@@ -92,6 +93,20 @@ class AuthServiceTests {
 
     StepVerifier.create(authService.registerCustomer(request))
         .expectError(EmailAlreadyExistsException.class)
+        .verify();
+  }
+
+  @Test
+  void registrationMapsDuplicateEmailConstraintToConflictException() {
+    RegisterRequest request = new RegisterRequest("race@example.com", "password123");
+    when(userRepository.existsByEmail("race@example.com")).thenReturn(Mono.just(false));
+    when(userRepository.save(any(User.class))).thenReturn(Mono.error(new DuplicateKeyException("uk_users_email")));
+
+    StepVerifier.create(authService.registerCustomer(request))
+        .expectErrorSatisfies(error -> {
+          assertThat(error).isInstanceOf(EmailAlreadyExistsException.class);
+          assertThat(error).hasMessage("Email already exists: race@example.com");
+        })
         .verify();
   }
 

@@ -67,6 +67,24 @@ class CategoryControllerIntegrationTests {
   }
 
   @Test
+  void duplicateCategoryNameReturnsConflict() {
+    Category category = saveCategory("duplicate");
+
+    webTestClient.post()
+        .uri("/api/v1/admin/categories")
+        .header(HttpHeaders.AUTHORIZATION, bearerTokenFor(UserRole.ADMIN))
+        .contentType(MediaType.APPLICATION_JSON)
+        .bodyValue(new CreateCategoryRequest(category.getName(), null))
+        .exchange()
+        .expectStatus().isEqualTo(409)
+        .expectBody()
+        .jsonPath("$.status").isEqualTo(409)
+        .jsonPath("$.error").isEqualTo("Conflict")
+        .jsonPath("$.message").isEqualTo("Category name already exists: " + category.getName())
+        .jsonPath("$.path").isEqualTo("/api/v1/admin/categories");
+  }
+
+  @Test
   void customerCannotCreateCategory() {
     CreateCategoryRequest request = new CreateCategoryRequest(uniqueName("customer-create"), null);
 

@@ -15,6 +15,7 @@ import com.example.marketplace.common.exception.UserBlockedException;
 import com.example.marketplace.common.exception.UserNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -74,6 +75,11 @@ class GlobalExceptionHandler {
   })
   ResponseEntity<ApiErrorResponse> handleConflict(RuntimeException exception, ServerWebExchange exchange) {
     return error(HttpStatus.CONFLICT, exception.getMessage(), exchange);
+  }
+
+  @ExceptionHandler(DuplicateKeyException.class)
+  ResponseEntity<ApiErrorResponse> handleDuplicateKey(DuplicateKeyException exception, ServerWebExchange exchange) {
+    return error(HttpStatus.CONFLICT, "Resource already exists", exchange);
   }
 
   @ExceptionHandler({

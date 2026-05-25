@@ -59,11 +59,6 @@ class ProductRepositoryAdapter implements ProductRepository {
         .flatMap(updatedRows -> updatedRows > 0 ? findById(productId) : Mono.empty());
   }
 
-  @Override
-  public Mono<Boolean> existsById(UUID id) {
-    return repository.existsById(id);
-  }
-
   private ProductEntity toEntity(Product product) {
     return new ProductEntity(
         product.getId(),

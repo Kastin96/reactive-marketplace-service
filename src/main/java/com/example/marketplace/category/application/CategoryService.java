@@ -8,6 +8,7 @@ import com.example.marketplace.common.exception.CategoryNotFoundException;
 import com.example.marketplace.common.exception.DuplicateCategoryNameException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -32,6 +33,7 @@ public class CategoryService {
           }
           return categoryRepository.save(Category.createNew(name, request.description()));
         })
+        .onErrorMap(DuplicateKeyException.class, exception -> new DuplicateCategoryNameException(name))
         .doOnNext(category -> log.info("Category created categoryId={}", category.getId()))
         .map(this::toResponse);
   }
