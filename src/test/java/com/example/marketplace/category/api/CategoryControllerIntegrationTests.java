@@ -122,7 +122,13 @@ class CategoryControllerIntegrationTests {
         .contentType(MediaType.APPLICATION_JSON)
         .bodyValue(request)
         .exchange()
-        .expectStatus().isBadRequest();
+        .expectStatus().isBadRequest()
+        .expectBody()
+        .jsonPath("$.status").isEqualTo(400)
+        .jsonPath("$.error").isEqualTo("Bad Request")
+        .jsonPath("$.message").isEqualTo("Validation failed")
+        .jsonPath("$.path").isEqualTo("/api/v1/admin/categories")
+        .jsonPath("$.fieldErrors[?(@.field == 'name')]").exists();
   }
 
   private Category saveCategory(String prefix) {
