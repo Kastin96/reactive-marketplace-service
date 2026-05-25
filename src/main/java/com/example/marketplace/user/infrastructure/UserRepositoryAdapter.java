@@ -1,15 +1,15 @@
 package com.example.marketplace.user.infrastructure;
 
-import java.util.UUID;
-
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
-import org.springframework.stereotype.Repository;
 import com.example.marketplace.user.domain.User;
 import com.example.marketplace.user.domain.UserRepository;
 import com.example.marketplace.user.domain.UserRole;
 import com.example.marketplace.user.domain.UserStatus;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
+
+import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor

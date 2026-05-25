@@ -1,10 +1,5 @@
 package com.example.marketplace.auth.application;
 
-import java.util.Locale;
-
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 import com.example.marketplace.auth.api.AuthResponse;
 import com.example.marketplace.auth.api.AuthUserResponse;
 import com.example.marketplace.auth.api.LoginRequest;
@@ -17,7 +12,12 @@ import com.example.marketplace.user.domain.User;
 import com.example.marketplace.user.domain.UserRepository;
 import com.example.marketplace.user.domain.UserRole;
 import com.example.marketplace.user.domain.UserStatus;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor

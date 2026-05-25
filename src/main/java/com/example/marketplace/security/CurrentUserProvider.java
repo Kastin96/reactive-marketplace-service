@@ -1,13 +1,13 @@
 package com.example.marketplace.security;
 
-import java.util.UUID;
-
+import com.example.marketplace.user.domain.UserRole;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Component;
-import com.example.marketplace.user.domain.UserRole;
 import reactor.core.publisher.Mono;
+
+import java.util.UUID;
 
 @Component
 public class CurrentUserProvider {

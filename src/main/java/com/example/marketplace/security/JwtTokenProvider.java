@@ -1,20 +1,19 @@
 package com.example.marketplace.security;
 
-import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.Date;
-import java.util.UUID;
-
-import javax.crypto.SecretKey;
-
+import com.example.marketplace.config.JwtProperties;
+import com.example.marketplace.user.domain.User;
+import com.example.marketplace.user.domain.UserRole;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
-import com.example.marketplace.config.JwtProperties;
-import com.example.marketplace.user.domain.User;
-import com.example.marketplace.user.domain.UserRole;
+
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtTokenProvider {

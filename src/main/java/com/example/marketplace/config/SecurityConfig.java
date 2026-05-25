@@ -1,5 +1,8 @@
 package com.example.marketplace.config;
 
+import com.example.marketplace.security.JwtAuthenticationWebFilter;
+import com.example.marketplace.security.JwtTokenProvider;
+import com.example.marketplace.user.application.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -13,9 +16,6 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.HttpStatusServerEntryPoint;
 import org.springframework.security.web.server.authorization.HttpStatusServerAccessDeniedHandler;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
-import com.example.marketplace.security.JwtAuthenticationWebFilter;
-import com.example.marketplace.security.JwtTokenProvider;
-import com.example.marketplace.user.application.UserService;
 
 @Configuration
 @EnableWebFluxSecurity

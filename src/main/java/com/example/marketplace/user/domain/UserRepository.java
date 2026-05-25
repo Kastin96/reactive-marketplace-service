@@ -1,8 +1,8 @@
 package com.example.marketplace.user.domain;
 
-import java.util.UUID;
-
 import reactor.core.publisher.Mono;
+
+import java.util.UUID;
 
 public interface UserRepository {
 

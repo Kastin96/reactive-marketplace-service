@@ -1,8 +1,8 @@
 package com.example.marketplace.security;
 
-import java.util.UUID;
-
 import com.example.marketplace.user.domain.UserRole;
+
+import java.util.UUID;
 
 public record AuthenticatedUser(
     UUID id,

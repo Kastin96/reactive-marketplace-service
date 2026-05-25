@@ -1,7 +1,7 @@
 package com.example.marketplace.security;
 
-import java.util.List;
-
+import com.example.marketplace.user.application.UserService;
+import com.example.marketplace.user.domain.UserStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -11,9 +11,9 @@ import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
-import com.example.marketplace.user.application.UserService;
-import com.example.marketplace.user.domain.UserStatus;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 public class JwtAuthenticationWebFilter implements WebFilter {

@@ -1,9 +1,9 @@
 package com.example.marketplace.user.api;
 
-import java.util.UUID;
-
 import com.example.marketplace.user.domain.UserRole;
 import com.example.marketplace.user.domain.UserStatus;
+
+import java.util.UUID;
 
 public record UserProfileResponse(
     UUID id,

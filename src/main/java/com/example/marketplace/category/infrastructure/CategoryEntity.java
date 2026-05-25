@@ -1,4 +1,4 @@
-package com.example.marketplace.user.infrastructure;
+package com.example.marketplace.category.infrastructure;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
@@ -7,15 +7,12 @@ import org.springframework.data.relational.core.mapping.Table;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Table("users")
-public record UserEntity(
+@Table("categories")
+record CategoryEntity(
     @Id
     UUID id,
-    String email,
-    @Column("password_hash")
-    String passwordHash,
-    String role,
-    String status,
+    String name,
+    String description,
     @Column("created_at")
     LocalDateTime createdAt,
     @Column("updated_at")

@@ -1,7 +1,10 @@
 package com.example.marketplace.security;
 
-import java.util.UUID;
-
+import com.example.marketplace.PostgresTestContainerConfig;
+import com.example.marketplace.auth.api.LoginRequest;
+import com.example.marketplace.user.domain.User;
+import com.example.marketplace.user.domain.UserRepository;
+import com.example.marketplace.user.domain.UserRole;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
@@ -17,12 +20,9 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import com.example.marketplace.PostgresTestContainerConfig;
-import com.example.marketplace.auth.api.LoginRequest;
-import com.example.marketplace.user.domain.User;
-import com.example.marketplace.user.domain.UserRepository;
-import com.example.marketplace.user.domain.UserRole;
 import reactor.test.StepVerifier;
+
+import java.util.UUID;
 
 @ActiveProfiles("test")
 @AutoConfigureWebTestClient
