@@ -76,7 +76,7 @@ class SecurityAuthorizationIntegrationTests {
   @Test
   void customerOrdersWithoutTokenReturnsUnauthorized() {
     webTestClient.get()
-        .uri("/api/v1/customer/orders")
+        .uri("/api/v1/customer/security-test")
         .exchange()
         .expectStatus().isUnauthorized();
   }
@@ -215,7 +215,7 @@ class SecurityAuthorizationIntegrationTests {
   @RequestMapping("/api/v1")
   static class TestRoleEndpoints {
 
-    @GetMapping("/customer/orders")
+    @GetMapping("/customer/security-test")
     String customerOrders() {
       return "customer";
     }

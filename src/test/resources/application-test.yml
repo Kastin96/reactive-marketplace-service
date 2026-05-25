@@ -3,6 +3,10 @@ spring:
     url: r2dbc:postgresql://localhost:5432/test
     username: test
     password: test
+    pool:
+      enabled: true
+      initial-size: 0
+      max-size: 2
   flyway:
     enabled: true
     url: jdbc:postgresql://localhost:5432/test
