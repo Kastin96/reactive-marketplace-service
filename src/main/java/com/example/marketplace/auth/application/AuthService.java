@@ -13,6 +13,7 @@ import com.example.marketplace.user.domain.UserRepository;
 import com.example.marketplace.user.domain.UserRole;
 import com.example.marketplace.user.domain.UserStatus;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -21,6 +22,7 @@ import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
   private static final String TOKEN_TYPE = "Bearer";
@@ -41,18 +43,29 @@ public class AuthService {
     String email = normalizeEmail(request.email());
 
     return userRepository.findByEmail(email)
-        .switchIfEmpty(Mono.error(InvalidCredentialsException::new))
-        .flatMap(user -> authenticate(user, request.password()));
+        .switchIfEmpty(Mono.defer(() -> {
+          log.warn("Invalid login attempt");
+          return Mono.error(new InvalidCredentialsException());
+        }))
+        .flatMap(user -> authenticate(user, request.password()))
+        .doOnNext(response -> log.info(
+            "User logged in userId={} role={}",
+            response.user().id(),
+            response.user().role()
+        ));
   }
 
   private Mono<AuthResponse> register(RegisterRequest request, UserRole role) {
     String email = normalizeEmail(request.email());
 
     return userRepository.existsByEmail(email)
-        .flatMap(exists -> exists
-            ? Mono.error(new EmailAlreadyExistsException(email))
-            : createUser(request, role, email)
-        );
+        .flatMap(exists -> {
+          if (exists) {
+            log.warn("Duplicate registration attempt role={}", role);
+            return Mono.error(new EmailAlreadyExistsException(email));
+          }
+          return createUser(request, role, email);
+        });
   }
 
   private Mono<AuthResponse> createUser(RegisterRequest request, UserRole role, String email) {
@@ -60,15 +73,18 @@ public class AuthService {
     User user = User.createNewActiveUser(email, passwordHash, role);
 
     return userRepository.save(user)
+        .doOnNext(savedUser -> log.info("User registered userId={} role={}", savedUser.getId(), savedUser.getRole()))
         .map(this::toAuthResponse);
   }
 
   private Mono<AuthResponse> authenticate(User user, String rawPassword) {
     if (!passwordEncoder.matches(rawPassword, user.getPasswordHash())) {
+      log.warn("Invalid login attempt userId={} role={}", user.getId(), user.getRole());
       return Mono.error(new InvalidCredentialsException());
     }
 
     if (user.getStatus() == UserStatus.BLOCKED) {
+      log.warn("Blocked user authentication attempt userId={} role={}", user.getId(), user.getRole());
       return Mono.error(new UserBlockedException(user.getId()));
     }
 

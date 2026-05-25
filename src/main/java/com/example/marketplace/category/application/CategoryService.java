@@ -7,6 +7,7 @@ import com.example.marketplace.category.domain.CategoryRepository;
 import com.example.marketplace.common.exception.CategoryNotFoundException;
 import com.example.marketplace.common.exception.DuplicateCategoryNameException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CategoryService {
 
   private final CategoryRepository categoryRepository;
@@ -23,10 +25,14 @@ public class CategoryService {
     String name = request.name().trim();
 
     return categoryRepository.existsByNameIgnoreCase(name)
-        .flatMap(exists -> exists
-            ? Mono.error(new DuplicateCategoryNameException(name))
-            : categoryRepository.save(Category.createNew(name, request.description()))
-        )
+        .flatMap(exists -> {
+          if (exists) {
+            log.warn("Duplicate category creation attempt");
+            return Mono.error(new DuplicateCategoryNameException(name));
+          }
+          return categoryRepository.save(Category.createNew(name, request.description()));
+        })
+        .doOnNext(category -> log.info("Category created categoryId={}", category.getId()))
         .map(this::toResponse);
   }
 

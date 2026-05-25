@@ -12,6 +12,7 @@ import com.example.marketplace.product.domain.ProductRepository;
 import com.example.marketplace.product.domain.ProductStatus;
 import com.example.marketplace.security.CurrentUserProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -20,6 +21,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductService {
 
   private final ProductRepository productRepository;
@@ -40,6 +42,13 @@ public class ProductService {
             request.stockQuantity()
         ))
         .flatMap(productRepository::save)
+        .doOnNext(product -> log.info(
+            "Product created productId={} userId={} categoryId={} status={}",
+            product.getId(),
+            product.getSellerId(),
+            product.getCategoryId(),
+            product.getStatus()
+        ))
         .map(this::toResponse);
   }
 
@@ -63,6 +72,13 @@ public class ProductService {
             )
         )
         .flatMap(productRepository::save)
+        .doOnNext(product -> log.info(
+            "Product updated productId={} userId={} categoryId={} status={}",
+            product.getId(),
+            product.getSellerId(),
+            product.getCategoryId(),
+            product.getStatus()
+        ))
         .map(this::toResponse);
   }
 
@@ -73,6 +89,7 @@ public class ProductService {
           return product;
         })
         .flatMap(productRepository::save)
+        .doOnNext(product -> log.info("Product activated productId={} status={}", product.getId(), product.getStatus()))
         .map(this::toResponse);
   }
 
@@ -83,6 +100,7 @@ public class ProductService {
           return product;
         })
         .flatMap(productRepository::save)
+        .doOnNext(product -> log.info("Product deactivated productId={} status={}", product.getId(), product.getStatus()))
         .map(this::toResponse);
   }
 
@@ -117,6 +135,7 @@ public class ProductService {
 
   private Mono<Void> requireOwner(Product product, UUID sellerId) {
     if (!product.getSellerId().equals(sellerId)) {
+      log.warn("Product access denied productId={} userId={}", product.getId(), sellerId);
       return Mono.error(new ProductAccessDeniedException(product.getId()));
     }
     return Mono.empty();

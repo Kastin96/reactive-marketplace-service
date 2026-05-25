@@ -29,4 +29,21 @@ class ActuatorHealthEndpointTests {
         .exchange()
         .expectStatus().isOk();
   }
+
+  @Test
+  void responseContainsRequestIdHeader() {
+    webTestClient.get()
+        .uri("/actuator/health")
+        .exchange()
+        .expectHeader().exists("X-Request-Id");
+  }
+
+  @Test
+  void responseUsesProvidedRequestIdHeader() {
+    webTestClient.get()
+        .uri("/actuator/health")
+        .header("X-Request-Id", "test-request-id")
+        .exchange()
+        .expectHeader().valueEquals("X-Request-Id", "test-request-id");
+  }
 }

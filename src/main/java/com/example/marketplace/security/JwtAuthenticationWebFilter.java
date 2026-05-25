@@ -3,6 +3,7 @@ package com.example.marketplace.security;
 import com.example.marketplace.user.application.UserService;
 import com.example.marketplace.user.domain.UserStatus;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,6 +17,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthenticationWebFilter implements WebFilter {
 
   private static final String BEARER_PREFIX = "Bearer ";
@@ -34,6 +36,7 @@ public class JwtAuthenticationWebFilter implements WebFilter {
     }
 
     if (!authorizationHeader.startsWith(BEARER_PREFIX)) {
+      log.warn("Invalid JWT authentication attempt reason=invalid_authorization_scheme");
       return unauthorized(exchange);
     }
 
@@ -43,6 +46,7 @@ public class JwtAuthenticationWebFilter implements WebFilter {
     try {
       claims = jwtTokenProvider.extractAuthenticationClaims(token);
     } catch (RuntimeException exception) {
+      log.warn("Invalid JWT authentication attempt reason=invalid_token");
       return unauthorized(exchange);
     }
 
@@ -65,7 +69,10 @@ public class JwtAuthenticationWebFilter implements WebFilter {
           return chain.filter(exchange)
               .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
         })
-        .onErrorResume(InvalidJwtAuthenticationException.class, exception -> unauthorized(exchange));
+        .onErrorResume(InvalidJwtAuthenticationException.class, exception -> {
+          log.warn("Invalid JWT authentication attempt userId={}", claims.userId());
+          return unauthorized(exchange);
+        });
   }
 
   private Mono<Void> unauthorized(ServerWebExchange exchange) {

@@ -1,19 +1,5 @@
 package com.example.marketplace.common.web;
 
-import java.time.Instant;
-import java.util.List;
-
-import jakarta.validation.ConstraintViolationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.support.WebExchangeBindException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.server.ServerWebInputException;
 import com.example.marketplace.common.exception.CategoryNotFoundException;
 import com.example.marketplace.common.exception.DuplicateCategoryNameException;
 import com.example.marketplace.common.exception.EmailAlreadyExistsException;
@@ -27,11 +13,23 @@ import com.example.marketplace.common.exception.ProductAccessDeniedException;
 import com.example.marketplace.common.exception.ProductNotFoundException;
 import com.example.marketplace.common.exception.UserBlockedException;
 import com.example.marketplace.common.exception.UserNotFoundException;
+import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.support.WebExchangeBindException;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.ServerWebInputException;
+
+import java.time.Instant;
+import java.util.List;
 
 @RestControllerAdvice
+@Slf4j
 class GlobalExceptionHandler {
-
-  private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
   @ExceptionHandler(WebExchangeBindException.class)
   ResponseEntity<ApiErrorResponse> handleValidation(

@@ -1,8 +1,11 @@
 # reactive-marketplace-service
 
-Reactive Marketplace Service is a compact Spring Boot backend for a small online marketplace. It is intended as a portfolio project that demonstrates clean Java backend structure, reactive persistence, JWT authentication, role-based access control, Flyway migrations, and tests.
+Reactive Marketplace Service is a compact Spring Boot backend for a small online marketplace. It is intended as a
+portfolio project that demonstrates clean Java backend structure, reactive persistence, JWT authentication, role-based
+access control, Flyway migrations, and tests.
 
-The project intentionally focuses on core marketplace flows: users, authentication, categories, products, and orders. It does not try to be a full e-commerce platform.
+The project intentionally focuses on core marketplace flows: users, authentication, categories, products, and orders. It
+does not try to be a full e-commerce platform.
 
 ## Tech Stack
 
@@ -45,28 +48,30 @@ The project intentionally focuses on core marketplace flows: users, authenticati
 ## Roles And Permissions
 
 - `CUSTOMER`
-  - Read active products and categories.
-  - Create orders.
-  - View own orders.
-  - Cancel own orders before shipped.
+    - Read active products and categories.
+    - Create orders.
+    - View own orders.
+    - Cancel own orders before shipped.
 
 - `SELLER`
-  - Read active products and categories.
-  - Create and update own products.
-  - View own products.
-  - View orders containing their products.
+    - Read active products and categories.
+    - Create and update own products.
+    - View own products.
+    - View orders containing their products.
 
 - `ADMIN`
-  - Manage categories.
-  - Activate or deactivate products.
-  - View all orders.
-  - Update order status.
+    - Manage categories.
+    - Activate or deactivate products.
+    - View all orders.
+    - Update order status.
 
 ## Architecture Overview
 
-The codebase uses module-oriented packages. Each business module keeps HTTP DTOs, application services, domain models, and persistence adapters separated.
+The codebase uses module-oriented packages. Each business module keeps HTTP DTOs, application services, domain models,
+and persistence adapters separated.
 
-Controllers stay thin and delegate business decisions to services and domain models. Persistence details stay in infrastructure adapters. API responses use DTO records and do not expose persistence entities.
+Controllers stay thin and delegate business decisions to services and domain models. Persistence details stay in
+infrastructure adapters. API responses use DTO records and do not expose persistence entities.
 
 ## Package Structure
 
@@ -173,7 +178,7 @@ SPRING_FLYWAY_USER=marketplace
 SPRING_FLYWAY_PASSWORD=marketplace
 
 JWT_ISSUER=reactive-marketplace-service
-JWT_SECRET=change-me-in-production-change-me-now
+JWT_SECRET=change-me-for-local-development-only
 JWT_EXPIRATION=15m
 ```
 
@@ -181,7 +186,8 @@ Use a strong private `JWT_SECRET` outside local development.
 
 ## Example Requests
 
-Admin registration is not exposed as a public API. For local testing, create an admin user directly in the database or through a controlled internal process, then login with that account to obtain `<admin-token>`.
+Admin registration is not exposed as a public API. For local testing, create an admin user directly in the database or
+through a controlled internal process, then login with that account to obtain `<admin-token>`.
 
 Register a customer:
 
@@ -270,7 +276,10 @@ API errors use a consistent JSON shape:
   "message": "Validation failed",
   "path": "/api/v1/customer/orders",
   "fieldErrors": [
-    {"field": "items[0].quantity", "message": "must be greater than or equal to 1"}
+    {
+      "field": "items[0].quantity",
+      "message": "must be greater than or equal to 1"
+    }
   ]
 }
 ```

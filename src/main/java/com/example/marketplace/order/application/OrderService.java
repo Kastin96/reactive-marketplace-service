@@ -2,6 +2,7 @@ package com.example.marketplace.order.application;
 
 import com.example.marketplace.common.exception.InactiveProductOrderException;
 import com.example.marketplace.common.exception.InsufficientStockException;
+import com.example.marketplace.common.exception.InvalidOrderStatusTransitionException;
 import com.example.marketplace.common.exception.OrderAccessDeniedException;
 import com.example.marketplace.common.exception.OrderNotFoundException;
 import com.example.marketplace.common.exception.ProductNotFoundException;
@@ -13,11 +14,13 @@ import com.example.marketplace.order.api.UpdateOrderStatusRequest;
 import com.example.marketplace.order.domain.Order;
 import com.example.marketplace.order.domain.OrderItem;
 import com.example.marketplace.order.domain.OrderRepository;
+import com.example.marketplace.order.domain.OrderStatus;
 import com.example.marketplace.product.domain.Product;
 import com.example.marketplace.product.domain.ProductRepository;
 import com.example.marketplace.product.domain.ProductStatus;
 import com.example.marketplace.security.CurrentUserProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
@@ -29,6 +32,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OrderService {
 
   private final OrderRepository orderRepository;
@@ -46,6 +50,12 @@ public class OrderService {
             .map(items -> Order.createNew(customerId, items))
         )
         .flatMap(orderRepository::save)
+        .doOnNext(order -> log.info(
+            "Order created orderId={} userId={} status={}",
+            order.getId(),
+            order.getCustomerId(),
+            order.getStatus()
+        ))
         .map(this::toResponse);
   }
 
@@ -78,10 +88,21 @@ public class OrderService {
   public Mono<OrderResponse> updateOrderStatus(UUID orderId, UpdateOrderStatusRequest request) {
     return findRequired(orderId)
         .map(order -> {
-          order.changeStatus(request.status());
+          try {
+            order.changeStatus(request.status());
+          } catch (InvalidOrderStatusTransitionException exception) {
+            log.warn(
+                "Invalid order status transition orderId={} status={} requestedStatus={}",
+                order.getId(),
+                order.getStatus(),
+                request.status()
+            );
+            throw exception;
+          }
           return order;
         })
         .flatMap(orderRepository::save)
+        .doOnNext(order -> log.info("Order status updated orderId={} status={}", order.getId(), order.getStatus()))
         .map(this::toResponse);
   }
 
@@ -91,10 +112,25 @@ public class OrderService {
             .flatMap(order -> requireCustomerOwner(order, customerId).thenReturn(order))
         )
         .map(order -> {
-          order.cancel();
+          try {
+            order.cancel();
+          } catch (InvalidOrderStatusTransitionException exception) {
+            log.warn(
+                "Invalid order cancellation orderId={} status={} requestedStatus={}",
+                order.getId(),
+                order.getStatus(),
+                OrderStatus.CANCELLED
+            );
+            throw exception;
+          }
           return order;
         })
         .flatMap(orderRepository::save)
+        .doOnNext(order -> log.info("Order cancelled orderId={} userId={} status={}",
+            order.getId(),
+            order.getCustomerId(),
+            order.getStatus()
+        ))
         .map(this::toResponse);
   }
 
@@ -119,9 +155,11 @@ public class OrderService {
 
   private Mono<Product> validateOrderableProduct(Product product, Integer quantity) {
     if (product.getStatus() != ProductStatus.ACTIVE) {
+      log.warn("Inactive product order attempt productId={} status={}", product.getId(), product.getStatus());
       return Mono.error(new InactiveProductOrderException(product.getId()));
     }
     if (product.getStockQuantity() < quantity) {
+      log.warn("Insufficient stock productId={}", product.getId());
       return Mono.error(new InsufficientStockException(product.getId()));
     }
     return Mono.just(product);
@@ -134,6 +172,7 @@ public class OrderService {
 
   private Mono<Void> requireCustomerOwner(Order order, UUID customerId) {
     if (!order.getCustomerId().equals(customerId)) {
+      log.warn("Order access denied orderId={} userId={}", order.getId(), customerId);
       return Mono.error(new OrderAccessDeniedException(order.getId()));
     }
     return Mono.empty();

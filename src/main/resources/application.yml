@@ -36,5 +36,14 @@ app:
   security:
     jwt:
       issuer: ${JWT_ISSUER:reactive-marketplace-service}
-      secret: ${JWT_SECRET:change-me-in-production-change-me-now}
+      secret: ${JWT_SECRET:change-me-for-local-development-only}
       expiration: ${JWT_EXPIRATION:15m}
+
+logging:
+  level:
+    com.example.marketplace: INFO
+    org.springframework.security: WARN
+    org.springframework.r2dbc: WARN
+    org.flywaydb: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level ${spring.application.name} [%thread] %logger{36} - %msg%n%ex"
