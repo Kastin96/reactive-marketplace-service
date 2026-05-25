@@ -117,7 +117,7 @@ class SecurityAuthorizationIntegrationTests {
     String token = tokenForActiveUser(UserRole.SELLER);
 
     webTestClient.get()
-        .uri("/api/v1/seller/products")
+        .uri("/api/v1/seller/security-test")
         .header(HttpHeaders.AUTHORIZATION, bearer(token))
         .exchange()
         .expectStatus().isOk();
@@ -220,7 +220,7 @@ class SecurityAuthorizationIntegrationTests {
       return "customer";
     }
 
-    @GetMapping("/seller/products")
+    @GetMapping("/seller/security-test")
     String sellerProducts() {
       return "seller";
     }
