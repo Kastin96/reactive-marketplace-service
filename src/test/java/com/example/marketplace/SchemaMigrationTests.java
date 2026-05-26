@@ -41,4 +41,33 @@ class SchemaMigrationTests {
     assertThat(tableNames)
         .contains("users", "categories", "products", "orders", "order_items");
   }
+
+  @Test
+  void flywayCreatesPaginationIndexes() {
+    Set<String> indexNames = databaseClient.sql("""
+            SELECT indexname
+            FROM pg_indexes
+            WHERE schemaname = 'public'
+            """)
+        .map((row, metadata) -> row.get("indexname", String.class))
+        .all()
+        .collectList()
+        .map(Set::copyOf)
+        .block();
+
+    assertThat(indexNames)
+        .contains(
+            "idx_products_status_created_at_id",
+            "idx_products_seller_id_created_at_id",
+            "idx_orders_customer_id_created_at_id",
+            "idx_orders_created_at_id",
+            "idx_order_items_seller_id_order_id"
+        )
+        .doesNotContain(
+            "idx_products_status",
+            "idx_products_seller_id",
+            "idx_orders_customer_id",
+            "idx_order_items_seller_id"
+        );
+  }
 }
