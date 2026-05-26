@@ -183,6 +183,7 @@ JWT_EXPIRATION=15m
 ```
 
 Use a strong private `JWT_SECRET` outside local development.
+The application fails fast outside the `local` and `test` profiles when the default local JWT secret is used.
 
 ## Example Requests
 
