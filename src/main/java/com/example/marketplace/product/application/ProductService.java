@@ -60,18 +60,21 @@ public class ProductService {
     return requireCategory(request.categoryId())
         .then(Mono.defer(currentUserProvider::currentUserId))
         .flatMap(sellerId -> findRequired(productId)
-            .flatMap(product -> requireOwner(product, sellerId)
-                .then(Mono.fromSupplier(() -> {
-                  product.updateDetails(
-                      request.categoryId(),
-                      name,
-                      request.description(),
-                      request.price(),
-                      request.stockQuantity()
-                  );
-                  return product;
-                }))
-            )
+            .flatMap(product -> {
+              if (!product.getSellerId().equals(sellerId)) {
+                log.warn("Product access denied productId={} userId={}", product.getId(), sellerId);
+                return Mono.error(new ProductAccessDeniedException(product.getId()));
+              }
+
+              product.updateDetails(
+                  request.categoryId(),
+                  name,
+                  request.description(),
+                  request.price(),
+                  request.stockQuantity()
+              );
+              return Mono.just(product);
+            })
         )
         .flatMap(productRepository::save)
         .doOnNext(product -> log.info(
@@ -145,14 +148,6 @@ public class ProductService {
   private Mono<Product> findRequired(UUID productId) {
     return productRepository.findById(productId)
         .switchIfEmpty(Mono.error(() -> new ProductNotFoundException(productId)));
-  }
-
-  private Mono<Void> requireOwner(Product product, UUID sellerId) {
-    if (!product.getSellerId().equals(sellerId)) {
-      log.warn("Product access denied productId={} userId={}", product.getId(), sellerId);
-      return Mono.error(new ProductAccessDeniedException(product.getId()));
-    }
-    return Mono.empty();
   }
 
   private ProductResponse toResponse(Product product) {

@@ -65,18 +65,6 @@ public class JwtTokenProvider {
     );
   }
 
-  public UUID extractUserId(String token) {
-    return extractAuthenticationClaims(token).userId();
-  }
-
-  public String extractEmail(String token) {
-    return extractAuthenticationClaims(token).email();
-  }
-
-  public UserRole extractRole(String token) {
-    return extractAuthenticationClaims(token).role();
-  }
-
   public long expiresInSeconds() {
     return jwtProperties.expiration().toSeconds();
   }

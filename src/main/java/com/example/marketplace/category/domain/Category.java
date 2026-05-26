@@ -42,10 +42,4 @@ public final class Category {
   ) {
     return new Category(id, name, description, createdAt, updatedAt);
   }
-
-  public void updateDetails(String name, String description) {
-    this.name = name;
-    this.description = description;
-    this.updatedAt = LocalDateTime.now();
-  }
 }

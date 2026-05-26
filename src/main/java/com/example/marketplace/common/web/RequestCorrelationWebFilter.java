@@ -22,7 +22,11 @@ public class RequestCorrelationWebFilter implements WebFilter {
 
   @Override
   public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-    String requestId = requestId(exchange);
+    String headerRequestId = exchange.getRequest().getHeaders().getFirst(REQUEST_ID_HEADER);
+    String requestId = StringUtils.hasText(headerRequestId)
+        ? headerRequestId
+        : UUID.randomUUID().toString();
+
     String method = exchange.getRequest().getMethod().name();
     String path = exchange.getRequest().getPath().value();
 
@@ -30,28 +34,15 @@ public class RequestCorrelationWebFilter implements WebFilter {
     log.info("Request started requestId={} method={} path={}", requestId, method, path);
 
     return chain.filter(exchange)
-        .doFinally(signalType -> log.info(
-            "Request completed requestId={} method={} path={} status={}",
-            requestId,
-            method,
-            path,
-            responseStatus(exchange)
-        ));
-  }
-
-  private String requestId(ServerWebExchange exchange) {
-    String requestId = exchange.getRequest().getHeaders().getFirst(REQUEST_ID_HEADER);
-    if (StringUtils.hasText(requestId)) {
-      return requestId;
-    }
-    return UUID.randomUUID().toString();
-  }
-
-  private String responseStatus(ServerWebExchange exchange) {
-    HttpStatusCode statusCode = exchange.getResponse().getStatusCode();
-    if (statusCode == null) {
-      return "UNKNOWN";
-    }
-    return String.valueOf(statusCode.value());
+        .doFinally(signalType -> {
+          HttpStatusCode statusCode = exchange.getResponse().getStatusCode();
+          log.info(
+              "Request completed requestId={} method={} path={} status={}",
+              requestId,
+              method,
+              path,
+              statusCode == null ? "UNKNOWN" : String.valueOf(statusCode.value())
+          );
+        });
   }
 }

@@ -5,6 +5,7 @@ import com.example.marketplace.auth.api.LoginRequest;
 import com.example.marketplace.user.domain.User;
 import com.example.marketplace.user.domain.UserRepository;
 import com.example.marketplace.user.domain.UserRole;
+import com.example.marketplace.user.domain.UserStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
@@ -179,12 +180,20 @@ class SecurityAuthorizationIntegrationTests {
 
   private String tokenForBlockedUser() {
     SavedUser savedUser = saveUser(UserRole.CUSTOMER);
-    User user = savedUser.user();
-    String token = jwtTokenProvider.generateAccessToken(user);
-    user.block();
+    User activeUser = savedUser.user();
+    String token = jwtTokenProvider.generateAccessToken(activeUser);
+    User blockedUser = User.restore(
+        activeUser.getId(),
+        activeUser.getEmail(),
+        activeUser.getPasswordHash(),
+        activeUser.getRole(),
+        UserStatus.BLOCKED,
+        activeUser.getCreatedAt(),
+        activeUser.getUpdatedAt()
+    );
 
-    StepVerifier.create(userRepository.save(user))
-        .expectNextMatches(saved -> saved.getStatus() == user.getStatus())
+    StepVerifier.create(userRepository.save(blockedUser))
+        .expectNextMatches(saved -> saved.getStatus() == UserStatus.BLOCKED)
         .verifyComplete();
 
     return token;

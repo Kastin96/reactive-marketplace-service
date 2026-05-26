@@ -10,6 +10,7 @@ import com.example.marketplace.security.JwtTokenProvider;
 import com.example.marketplace.user.domain.User;
 import com.example.marketplace.user.domain.UserRepository;
 import com.example.marketplace.user.domain.UserRole;
+import com.example.marketplace.user.domain.UserStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -144,12 +145,20 @@ class AuthServiceTests {
 
   @Test
   void loginFailsForBlockedUser() {
-    User user = User.createNewActiveUser(
+    User activeUser = User.createNewActiveUser(
         "blocked@example.com",
         passwordEncoder.encode("password123"),
         UserRole.CUSTOMER
     );
-    user.block();
+    User user = User.restore(
+        activeUser.getId(),
+        activeUser.getEmail(),
+        activeUser.getPasswordHash(),
+        activeUser.getRole(),
+        UserStatus.BLOCKED,
+        activeUser.getCreatedAt(),
+        activeUser.getUpdatedAt()
+    );
     when(userRepository.findByEmail("blocked@example.com")).thenReturn(Mono.just(user));
 
     StepVerifier.create(authService.login(new LoginRequest("blocked@example.com", "password123")))

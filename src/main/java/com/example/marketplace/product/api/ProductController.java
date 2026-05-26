@@ -67,7 +67,7 @@ public class ProductController {
       @Parameter(description = "Page size from 1 to 100.", example = "20")
       @RequestParam(defaultValue = PageRequest.DEFAULT_SIZE_VALUE) int size
   ) {
-    return productService.getCurrentSellerProducts(pageRequest(page, size));
+    return productService.getCurrentSellerProducts(PageRequest.of(page, size));
   }
 
   @GetMapping("/api/v1/products")
@@ -82,7 +82,7 @@ public class ProductController {
       @Parameter(description = "Page size from 1 to 100.", example = "20")
       @RequestParam(defaultValue = PageRequest.DEFAULT_SIZE_VALUE) int size
   ) {
-    return productService.getActiveProducts(pageRequest(page, size));
+    return productService.getActiveProducts(PageRequest.of(page, size));
   }
 
   @GetMapping("/api/v1/products/{productId}")
@@ -113,9 +113,5 @@ public class ProductController {
   )
   public Mono<ProductResponse> deactivateProduct(@PathVariable UUID productId) {
     return productService.deactivateProduct(productId);
-  }
-
-  private PageRequest pageRequest(int page, int size) {
-    return PageRequest.of(page, size);
   }
 }

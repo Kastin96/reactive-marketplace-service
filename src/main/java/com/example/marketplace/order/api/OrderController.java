@@ -53,7 +53,7 @@ public class OrderController {
       @Parameter(description = "Page size from 1 to 100.", example = "20")
       @RequestParam(defaultValue = PageRequest.DEFAULT_SIZE_VALUE) int size
   ) {
-    return orderService.getCurrentCustomerOrders(pageRequest(page, size));
+    return orderService.getCurrentCustomerOrders(PageRequest.of(page, size));
   }
 
   @GetMapping("/api/v1/customer/orders/{orderId}")
@@ -88,7 +88,7 @@ public class OrderController {
       @Parameter(description = "Page size from 1 to 100.", example = "20")
       @RequestParam(defaultValue = PageRequest.DEFAULT_SIZE_VALUE) int size
   ) {
-    return orderService.getCurrentSellerOrders(pageRequest(page, size));
+    return orderService.getCurrentSellerOrders(PageRequest.of(page, size));
   }
 
   @GetMapping("/api/v1/admin/orders")
@@ -103,7 +103,7 @@ public class OrderController {
       @Parameter(description = "Page size from 1 to 100.", example = "20")
       @RequestParam(defaultValue = PageRequest.DEFAULT_SIZE_VALUE) int size
   ) {
-    return orderService.getAllOrders(pageRequest(page, size));
+    return orderService.getAllOrders(PageRequest.of(page, size));
   }
 
   @PatchMapping("/api/v1/admin/orders/{orderId}/status")
@@ -117,9 +117,5 @@ public class OrderController {
       @Valid @RequestBody UpdateOrderStatusRequest request
   ) {
     return orderService.updateOrderStatus(orderId, request);
-  }
-
-  private PageRequest pageRequest(int page, int size) {
-    return PageRequest.of(page, size);
   }
 }

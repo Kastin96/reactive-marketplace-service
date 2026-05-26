@@ -3,7 +3,6 @@ package com.example.marketplace.user.api;
 import com.example.marketplace.config.OpenApiConfig;
 import com.example.marketplace.security.CurrentUserProvider;
 import com.example.marketplace.user.application.UserService;
-import com.example.marketplace.user.domain.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,15 +30,11 @@ public class UserController {
   public Mono<UserProfileResponse> me() {
     return currentUserProvider.currentUserId()
         .flatMap(userService::getById)
-        .map(this::toResponse);
-  }
-
-  private UserProfileResponse toResponse(User user) {
-    return new UserProfileResponse(
-        user.getId(),
-        user.getEmail(),
-        user.getRole(),
-        user.getStatus()
-    );
+        .map(user -> new UserProfileResponse(
+            user.getId(),
+            user.getEmail(),
+            user.getRole(),
+            user.getStatus()
+        ));
   }
 }

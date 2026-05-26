@@ -51,14 +51,4 @@ public final class User {
   ) {
     return new User(id, email, passwordHash, role, status, createdAt, updatedAt);
   }
-
-  public void block() {
-    this.status = UserStatus.BLOCKED;
-    this.updatedAt = LocalDateTime.now();
-  }
-
-  public void activate() {
-    this.status = UserStatus.ACTIVE;
-    this.updatedAt = LocalDateTime.now();
-  }
 }

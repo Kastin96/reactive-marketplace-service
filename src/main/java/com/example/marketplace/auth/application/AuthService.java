@@ -48,7 +48,19 @@ public class AuthService {
           log.warn("Invalid login attempt");
           return Mono.error(new InvalidCredentialsException());
         }))
-        .flatMap(user -> authenticate(user, request.password()))
+        .flatMap(user -> {
+          if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            log.warn("Invalid login attempt userId={} role={}", user.getId(), user.getRole());
+            return Mono.error(new InvalidCredentialsException());
+          }
+
+          if (user.getStatus() == UserStatus.BLOCKED) {
+            log.warn("Blocked user authentication attempt userId={} role={}", user.getId(), user.getRole());
+            return Mono.error(new UserBlockedException(user.getId()));
+          }
+
+          return Mono.just(toAuthResponse(user));
+        })
         .doOnNext(response -> log.info(
             "User logged in userId={} role={}",
             response.user().id(),
@@ -65,32 +77,14 @@ public class AuthService {
             log.warn("Duplicate registration attempt role={}", role);
             return Mono.error(new EmailAlreadyExistsException(email));
           }
-          return createUser(request, role, email);
+          String passwordHash = passwordEncoder.encode(request.password());
+          User user = User.createNewActiveUser(email, passwordHash, role);
+
+          return userRepository.save(user)
+              .onErrorMap(DuplicateKeyException.class, exception -> new EmailAlreadyExistsException(email))
+              .doOnNext(savedUser -> log.info("User registered userId={} role={}", savedUser.getId(), savedUser.getRole()))
+              .map(this::toAuthResponse);
         });
-  }
-
-  private Mono<AuthResponse> createUser(RegisterRequest request, UserRole role, String email) {
-    String passwordHash = passwordEncoder.encode(request.password());
-    User user = User.createNewActiveUser(email, passwordHash, role);
-
-    return userRepository.save(user)
-        .onErrorMap(DuplicateKeyException.class, exception -> new EmailAlreadyExistsException(email))
-        .doOnNext(savedUser -> log.info("User registered userId={} role={}", savedUser.getId(), savedUser.getRole()))
-        .map(this::toAuthResponse);
-  }
-
-  private Mono<AuthResponse> authenticate(User user, String rawPassword) {
-    if (!passwordEncoder.matches(rawPassword, user.getPasswordHash())) {
-      log.warn("Invalid login attempt userId={} role={}", user.getId(), user.getRole());
-      return Mono.error(new InvalidCredentialsException());
-    }
-
-    if (user.getStatus() == UserStatus.BLOCKED) {
-      log.warn("Blocked user authentication attempt userId={} role={}", user.getId(), user.getRole());
-      return Mono.error(new UserBlockedException(user.getId()));
-    }
-
-    return Mono.just(toAuthResponse(user));
   }
 
   private AuthResponse toAuthResponse(User user) {

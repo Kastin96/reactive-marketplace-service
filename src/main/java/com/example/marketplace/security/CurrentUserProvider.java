@@ -1,6 +1,5 @@
 package com.example.marketplace.security;
 
-import com.example.marketplace.user.domain.UserRole;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -14,14 +13,6 @@ public class CurrentUserProvider {
 
   public Mono<UUID> currentUserId() {
     return currentUser().map(AuthenticatedUser::id);
-  }
-
-  public Mono<String> currentUserEmail() {
-    return currentUser().map(AuthenticatedUser::email);
-  }
-
-  public Mono<UserRole> currentUserRole() {
-    return currentUser().map(AuthenticatedUser::role);
   }
 
   private Mono<AuthenticatedUser> currentUser() {

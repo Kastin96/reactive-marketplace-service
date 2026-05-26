@@ -102,18 +102,6 @@ public final class Product {
     this.updatedAt = LocalDateTime.now();
   }
 
-  public void decreaseStock(int quantity) {
-    if (quantity <= 0) {
-      throw new IllegalArgumentException("Quantity must be greater than zero");
-    }
-    if (stockQuantity < quantity) {
-      throw new IllegalArgumentException("Stock quantity is not sufficient");
-    }
-
-    this.stockQuantity = stockQuantity - quantity;
-    this.updatedAt = LocalDateTime.now();
-  }
-
   private static void validatePrice(BigDecimal price) {
     if (price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
       throw new IllegalArgumentException("Product price must be greater than zero");

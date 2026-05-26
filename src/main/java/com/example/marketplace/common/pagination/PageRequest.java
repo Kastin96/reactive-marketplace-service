@@ -5,8 +5,6 @@ public record PageRequest(
     int size
 ) {
 
-  public static final int DEFAULT_PAGE = 0;
-  public static final int DEFAULT_SIZE = 20;
   public static final int MAX_SIZE = 100;
   public static final String DEFAULT_PAGE_VALUE = "0";
   public static final String DEFAULT_SIZE_VALUE = "20";
