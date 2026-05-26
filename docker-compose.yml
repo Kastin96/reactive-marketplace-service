@@ -1,7 +1,26 @@
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8080
+      SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/reactive_marketplace
+      SPRING_R2DBC_USERNAME: marketplace
+      SPRING_R2DBC_PASSWORD: marketplace
+      SPRING_FLYWAY_URL: jdbc:postgresql://postgres:5432/reactive_marketplace
+      SPRING_FLYWAY_USER: marketplace
+      SPRING_FLYWAY_PASSWORD: marketplace
+      JWT_SECRET: ${JWT_SECRET:-local-compose-jwt-secret-change-me-123456}
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
   postgres:
     image: postgres:16-alpine
-    container_name: reactive-marketplace-postgres
     environment:
       POSTGRES_DB: reactive_marketplace
       POSTGRES_USER: marketplace

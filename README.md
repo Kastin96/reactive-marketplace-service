@@ -127,7 +127,7 @@ The application uses R2DBC for runtime database access and Flyway over JDBC for 
 
 ## Run PostgreSQL
 
-Start the local database with Docker Compose:
+Start only the local database with Docker Compose:
 
 ```bash
 docker compose up -d postgres
@@ -139,6 +139,22 @@ Default local credentials from `docker-compose.yml`:
 - user: `marketplace`
 - password: `marketplace`
 - port: `5432`
+
+## Run With Docker Compose
+
+Build and start the full local stack:
+
+```bash
+docker compose up --build
+```
+
+The API is available at `http://localhost:8080`.
+
+To reset the local Compose database volume:
+
+```bash
+docker compose down -v
+```
 
 ## Run The Application
 
