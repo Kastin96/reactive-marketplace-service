@@ -30,6 +30,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @ActiveProfiles("test")
 @AutoConfigureWebTestClient
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -81,6 +83,38 @@ class OrderControllerIntegrationTests {
         .jsonPath("$.items[0].productId").isEqualTo(product.getId().toString())
         .jsonPath("$.items[0].unitPrice").isEqualTo(29.99)
         .jsonPath("$.items[0].productName").isEqualTo(product.getName());
+  }
+
+  @Test
+  void failedMultiItemOrderRollsBackReservedStock() {
+    User customer = saveUser(UserRole.CUSTOMER);
+    User seller = saveUser(UserRole.SELLER);
+    Product reservedProduct = saveProduct(seller, true, 5);
+    Product unavailableProduct = saveProduct(seller, true, 1);
+    CreateOrderRequest request = new CreateOrderRequest(List.of(
+        new CreateOrderItemRequest(reservedProduct.getId(), 2),
+        new CreateOrderItemRequest(unavailableProduct.getId(), 2)
+    ));
+
+    webTestClient.post()
+        .uri("/api/v1/customer/orders")
+        .header(HttpHeaders.AUTHORIZATION, bearer(customer))
+        .contentType(MediaType.APPLICATION_JSON)
+        .bodyValue(request)
+        .exchange()
+        .expectStatus().isBadRequest();
+
+    StepVerifier.create(productRepository.findById(reservedProduct.getId()))
+        .assertNext(product -> assertThat(product.getStockQuantity()).isEqualTo(5))
+        .verifyComplete();
+
+    StepVerifier.create(productRepository.findById(unavailableProduct.getId()))
+        .assertNext(product -> assertThat(product.getStockQuantity()).isEqualTo(1))
+        .verifyComplete();
+
+    StepVerifier.create(orderRepository.countByCustomerId(customer.getId()))
+        .expectNext(0L)
+        .verifyComplete();
   }
 
   @Test
