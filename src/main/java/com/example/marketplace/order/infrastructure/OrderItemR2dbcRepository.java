@@ -10,7 +10,5 @@ interface OrderItemR2dbcRepository extends ReactiveCrudRepository<OrderItemEntit
 
   Flux<OrderItemEntity> findByOrderId(UUID orderId);
 
-  Flux<OrderItemEntity> findBySellerId(UUID sellerId);
-
   Mono<Void> deleteByOrderId(UUID orderId);
 }

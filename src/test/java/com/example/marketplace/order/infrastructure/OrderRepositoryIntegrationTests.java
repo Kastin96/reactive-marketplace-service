@@ -3,6 +3,7 @@ package com.example.marketplace.order.infrastructure;
 import com.example.marketplace.PostgresTestContainerConfig;
 import com.example.marketplace.category.domain.Category;
 import com.example.marketplace.category.domain.CategoryRepository;
+import com.example.marketplace.common.pagination.PageRequest;
 import com.example.marketplace.order.domain.Order;
 import com.example.marketplace.order.domain.OrderItem;
 import com.example.marketplace.order.domain.OrderRepository;
@@ -18,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
@@ -79,7 +81,8 @@ class OrderRepositoryIntegrationTests {
   void findOrdersByCustomerId() {
     Order order = newOrder();
 
-    StepVerifier.create(orderRepository.save(order).thenMany(orderRepository.findByCustomerId(order.getCustomerId())))
+    StepVerifier.create(orderRepository.save(order)
+            .thenMany(orderRepository.findByCustomerId(order.getCustomerId(), PageRequest.of(0, 20))))
         .expectNextMatches(found -> found.getId().equals(order.getId()))
         .thenCancel()
         .verify();
@@ -90,7 +93,8 @@ class OrderRepositoryIntegrationTests {
     Order order = newOrder();
     UUID sellerId = order.getItems().getFirst().sellerId();
 
-    StepVerifier.create(orderRepository.save(order).thenMany(orderRepository.findBySellerId(sellerId)))
+    StepVerifier.create(orderRepository.save(order)
+            .thenMany(orderRepository.findBySellerId(sellerId, PageRequest.of(0, 20))))
         .expectNextMatches(found -> found.getId().equals(order.getId()))
         .thenCancel()
         .verify();
@@ -101,8 +105,27 @@ class OrderRepositoryIntegrationTests {
     Order order = newOrder();
 
     StepVerifier.create(orderRepository.save(order)
-            .thenMany(orderRepository.findAll().filter(found -> found.getId().equals(order.getId()))))
+            .thenMany(orderRepository.findAll(PageRequest.of(0, 20)).filter(found -> found.getId().equals(order.getId()))))
         .expectNextMatches(found -> found.getItems().size() == 1)
+        .verifyComplete();
+  }
+
+  @Test
+  void countOrdersByCustomerAndSeller() {
+    Order order = newOrder();
+    UUID sellerId = order.getItems().getFirst().sellerId();
+
+    StepVerifier.create(orderRepository.save(order)
+            .then(Mono.zip(
+                orderRepository.countByCustomerId(order.getCustomerId()),
+                orderRepository.countBySellerId(sellerId),
+                orderRepository.countAll()
+            )))
+        .assertNext(result -> {
+          assertThat(result.getT1()).isGreaterThanOrEqualTo(1);
+          assertThat(result.getT2()).isGreaterThanOrEqualTo(1);
+          assertThat(result.getT3()).isGreaterThanOrEqualTo(1);
+        })
         .verifyComplete();
   }
 

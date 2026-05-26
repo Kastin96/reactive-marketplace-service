@@ -116,12 +116,17 @@ class OrderControllerIntegrationTests {
     Order order = saveOrder(customer, saveUser(UserRole.SELLER));
 
     webTestClient.get()
-        .uri("/api/v1/customer/orders")
+        .uri("/api/v1/customer/orders?page=0&size=20")
         .header(HttpHeaders.AUTHORIZATION, bearer(customer))
         .exchange()
         .expectStatus().isOk()
         .expectBody()
-        .jsonPath("$[?(@.id == '%s')]".formatted(order.getId())).exists();
+        .jsonPath("$.content[?(@.id == '%s')]".formatted(order.getId())).exists()
+        .jsonPath("$.page").isEqualTo(0)
+        .jsonPath("$.size").isEqualTo(20)
+        .jsonPath("$.totalElements").isEqualTo(1)
+        .jsonPath("$.totalPages").isEqualTo(1)
+        .jsonPath("$.last").isEqualTo(true);
   }
 
   @Test
@@ -131,12 +136,14 @@ class OrderControllerIntegrationTests {
     Order order = saveOrder(customer, seller);
 
     webTestClient.get()
-        .uri("/api/v1/seller/orders")
+        .uri("/api/v1/seller/orders?page=0&size=20")
         .header(HttpHeaders.AUTHORIZATION, bearer(seller))
         .exchange()
         .expectStatus().isOk()
         .expectBody()
-        .jsonPath("$[?(@.id == '%s')]".formatted(order.getId())).exists();
+        .jsonPath("$.content[?(@.id == '%s')]".formatted(order.getId())).exists()
+        .jsonPath("$.content[0].items[0].sellerId").isEqualTo(seller.getId().toString())
+        .jsonPath("$.totalElements").isEqualTo(1);
   }
 
   @Test
@@ -144,12 +151,15 @@ class OrderControllerIntegrationTests {
     Order order = saveOrder(saveUser(UserRole.CUSTOMER), saveUser(UserRole.SELLER));
 
     webTestClient.get()
-        .uri("/api/v1/admin/orders")
+        .uri("/api/v1/admin/orders?page=0&size=20")
         .header(HttpHeaders.AUTHORIZATION, bearer(saveUser(UserRole.ADMIN)))
         .exchange()
         .expectStatus().isOk()
         .expectBody()
-        .jsonPath("$[?(@.id == '%s')]".formatted(order.getId())).exists();
+        .jsonPath("$.content[?(@.id == '%s')]".formatted(order.getId())).exists()
+        .jsonPath("$.page").isEqualTo(0)
+        .jsonPath("$.size").isEqualTo(20)
+        .jsonPath("$.totalElements").isNumber();
   }
 
   @Test

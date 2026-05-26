@@ -37,6 +37,8 @@ class OpenApiEndpointTests {
         .jsonPath("$.components.schemas.ApiErrorResponse").exists()
         .jsonPath("$.paths['/api/v1/auth/login'].post.security").doesNotExist()
         .jsonPath("$.paths['/api/v1/customer/orders'].post.security[0].bearerAuth").exists()
+        .jsonPath("$.paths['/api/v1/products'].get.parameters[?(@.name == 'page')]").exists()
+        .jsonPath("$.paths['/api/v1/products'].get.parameters[?(@.name == 'size')]").exists()
         .jsonPath("$.paths['/api/v1/admin/categories'].post.description").isEqualTo("Requires ADMIN role.")
         .jsonPath("$.paths['/api/v1/seller/products'].post.description")
         .isEqualTo("Requires SELLER role. New products are created as DRAFT.")

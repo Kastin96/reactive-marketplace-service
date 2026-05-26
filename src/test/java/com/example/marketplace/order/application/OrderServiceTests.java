@@ -5,6 +5,7 @@ import com.example.marketplace.common.exception.InsufficientStockException;
 import com.example.marketplace.common.exception.InvalidOrderStatusTransitionException;
 import com.example.marketplace.common.exception.OrderAccessDeniedException;
 import com.example.marketplace.common.exception.ProductNotFoundException;
+import com.example.marketplace.common.pagination.PageRequest;
 import com.example.marketplace.order.api.CreateOrderItemRequest;
 import com.example.marketplace.order.api.CreateOrderRequest;
 import com.example.marketplace.order.api.UpdateOrderStatusRequest;
@@ -188,13 +189,18 @@ class OrderServiceTests {
     UUID sellerId = UUID.randomUUID();
     UUID otherSellerId = UUID.randomUUID();
     Order order = orderForCustomer(UUID.randomUUID(), sellerId, otherSellerId);
+    PageRequest pageRequest = PageRequest.of(0, 20);
     when(currentUserProvider.currentUserId()).thenReturn(Mono.just(sellerId));
-    when(orderRepository.findBySellerId(sellerId)).thenReturn(Flux.just(order));
+    when(orderRepository.findBySellerId(sellerId, pageRequest)).thenReturn(Flux.just(order));
+    when(orderRepository.countBySellerId(sellerId)).thenReturn(Mono.just(1L));
 
-    StepVerifier.create(orderService.getCurrentSellerOrders())
+    StepVerifier.create(orderService.getCurrentSellerOrders(pageRequest))
         .assertNext(response -> {
-          assertThat(response.items()).hasSize(1);
-          assertThat(response.items().getFirst().sellerId()).isEqualTo(sellerId);
+          assertThat(response.content()).hasSize(1);
+          assertThat(response.content().getFirst().items()).hasSize(1);
+          assertThat(response.content().getFirst().items().getFirst().sellerId()).isEqualTo(sellerId);
+          assertThat(response.totalElements()).isEqualTo(1);
+          assertThat(response.last()).isTrue();
         })
         .verifyComplete();
   }

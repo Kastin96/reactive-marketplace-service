@@ -4,6 +4,8 @@ import com.example.marketplace.category.domain.CategoryRepository;
 import com.example.marketplace.common.exception.CategoryNotFoundException;
 import com.example.marketplace.common.exception.ProductAccessDeniedException;
 import com.example.marketplace.common.exception.ProductNotFoundException;
+import com.example.marketplace.common.pagination.PageRequest;
+import com.example.marketplace.common.pagination.PageResponse;
 import com.example.marketplace.product.api.CreateProductRequest;
 import com.example.marketplace.product.api.ProductResponse;
 import com.example.marketplace.product.api.UpdateProductRequest;
@@ -14,9 +16,9 @@ import com.example.marketplace.security.CurrentUserProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -104,9 +106,14 @@ public class ProductService {
         .map(this::toResponse);
   }
 
-  public Flux<ProductResponse> getActiveProducts() {
-    return productRepository.findAllActive()
-        .map(this::toResponse);
+  public Mono<PageResponse<ProductResponse>> getActiveProducts(PageRequest pageRequest) {
+    Mono<List<ProductResponse>> content = productRepository.findAllActive(pageRequest)
+        .map(this::toResponse)
+        .collectList();
+    Mono<Long> totalElements = productRepository.countAllActive();
+
+    return Mono.zip(content, totalElements)
+        .map(result -> PageResponse.of(result.getT1(), pageRequest, result.getT2()));
   }
 
   public Mono<ProductResponse> getProductById(UUID productId) {
@@ -116,10 +123,17 @@ public class ProductService {
         .map(this::toResponse);
   }
 
-  public Flux<ProductResponse> getCurrentSellerProducts() {
+  public Mono<PageResponse<ProductResponse>> getCurrentSellerProducts(PageRequest pageRequest) {
     return currentUserProvider.currentUserId()
-        .flatMapMany(productRepository::findBySellerId)
-        .map(this::toResponse);
+        .flatMap(sellerId -> {
+          Mono<List<ProductResponse>> content = productRepository.findBySellerId(sellerId, pageRequest)
+              .map(this::toResponse)
+              .collectList();
+          Mono<Long> totalElements = productRepository.countBySellerId(sellerId);
+
+          return Mono.zip(content, totalElements)
+              .map(result -> PageResponse.of(result.getT1(), pageRequest, result.getT2()));
+        });
   }
 
   private Mono<Void> requireCategory(UUID categoryId) {

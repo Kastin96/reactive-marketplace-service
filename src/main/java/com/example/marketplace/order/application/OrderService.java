@@ -6,6 +6,8 @@ import com.example.marketplace.common.exception.InvalidOrderStatusTransitionExce
 import com.example.marketplace.common.exception.OrderAccessDeniedException;
 import com.example.marketplace.common.exception.OrderNotFoundException;
 import com.example.marketplace.common.exception.ProductNotFoundException;
+import com.example.marketplace.common.pagination.PageRequest;
+import com.example.marketplace.common.pagination.PageResponse;
 import com.example.marketplace.order.api.CreateOrderItemRequest;
 import com.example.marketplace.order.api.CreateOrderRequest;
 import com.example.marketplace.order.api.OrderItemResponse;
@@ -59,10 +61,17 @@ public class OrderService {
         .map(this::toResponse);
   }
 
-  public Flux<OrderResponse> getCurrentCustomerOrders() {
+  public Mono<PageResponse<OrderResponse>> getCurrentCustomerOrders(PageRequest pageRequest) {
     return currentUserProvider.currentUserId()
-        .flatMapMany(orderRepository::findByCustomerId)
-        .map(this::toResponse);
+        .flatMap(customerId -> {
+          Mono<List<OrderResponse>> content = orderRepository.findByCustomerId(customerId, pageRequest)
+              .map(this::toResponse)
+              .collectList();
+          Mono<Long> totalElements = orderRepository.countByCustomerId(customerId);
+
+          return Mono.zip(content, totalElements)
+              .map(result -> PageResponse.of(result.getT1(), pageRequest, result.getT2()));
+        });
   }
 
   public Mono<OrderResponse> getCurrentCustomerOrderById(UUID orderId) {
@@ -73,16 +82,27 @@ public class OrderService {
         .map(this::toResponse);
   }
 
-  public Flux<OrderResponse> getCurrentSellerOrders() {
+  public Mono<PageResponse<OrderResponse>> getCurrentSellerOrders(PageRequest pageRequest) {
     return currentUserProvider.currentUserId()
-        .flatMapMany(sellerId -> orderRepository.findBySellerId(sellerId)
-            .map(order -> toSellerResponse(order, sellerId))
-        );
+        .flatMap(sellerId -> {
+          Mono<List<OrderResponse>> content = orderRepository.findBySellerId(sellerId, pageRequest)
+              .map(order -> toSellerResponse(order, sellerId))
+              .collectList();
+          Mono<Long> totalElements = orderRepository.countBySellerId(sellerId);
+
+          return Mono.zip(content, totalElements)
+              .map(result -> PageResponse.of(result.getT1(), pageRequest, result.getT2()));
+        });
   }
 
-  public Flux<OrderResponse> getAllOrders() {
-    return orderRepository.findAll()
-        .map(this::toResponse);
+  public Mono<PageResponse<OrderResponse>> getAllOrders(PageRequest pageRequest) {
+    Mono<List<OrderResponse>> content = orderRepository.findAll(pageRequest)
+        .map(this::toResponse)
+        .collectList();
+    Mono<Long> totalElements = orderRepository.countAll();
+
+    return Mono.zip(content, totalElements)
+        .map(result -> PageResponse.of(result.getT1(), pageRequest, result.getT2()));
   }
 
   public Mono<OrderResponse> updateOrderStatus(UUID orderId, UpdateOrderStatusRequest request) {

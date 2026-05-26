@@ -107,13 +107,37 @@ class ProductControllerIntegrationTests {
     Product inactiveProduct = saveProduct(false);
 
     webTestClient.get()
-        .uri("/api/v1/products")
+        .uri("/api/v1/products?page=0&size=20")
         .header(HttpHeaders.AUTHORIZATION, bearer(saveUser(UserRole.CUSTOMER)))
         .exchange()
         .expectStatus().isOk()
         .expectBody()
-        .jsonPath("$[?(@.id == '%s')]".formatted(activeProduct.getId())).exists()
-        .jsonPath("$[?(@.id == '%s')]".formatted(inactiveProduct.getId())).doesNotExist();
+        .jsonPath("$.content[?(@.id == '%s')]".formatted(activeProduct.getId())).exists()
+        .jsonPath("$.content[?(@.id == '%s')]".formatted(inactiveProduct.getId())).doesNotExist()
+        .jsonPath("$.page").isEqualTo(0)
+        .jsonPath("$.size").isEqualTo(20)
+        .jsonPath("$.totalElements").isNumber()
+        .jsonPath("$.totalPages").isNumber()
+        .jsonPath("$.last").isBoolean();
+  }
+
+  @Test
+  void sellerProductListingReturnsPagedResponse() {
+    User seller = saveUser(UserRole.SELLER);
+    Product product = saveProduct(seller, true);
+
+    webTestClient.get()
+        .uri("/api/v1/seller/products?page=0&size=1")
+        .header(HttpHeaders.AUTHORIZATION, bearer(seller))
+        .exchange()
+        .expectStatus().isOk()
+        .expectBody()
+        .jsonPath("$.content[?(@.id == '%s')]".formatted(product.getId())).exists()
+        .jsonPath("$.page").isEqualTo(0)
+        .jsonPath("$.size").isEqualTo(1)
+        .jsonPath("$.totalElements").isEqualTo(1)
+        .jsonPath("$.totalPages").isEqualTo(1)
+        .jsonPath("$.last").isEqualTo(true);
   }
 
   @Test
@@ -190,6 +214,10 @@ class ProductControllerIntegrationTests {
 
   private Product saveProduct(boolean active) {
     User seller = saveUser(UserRole.SELLER);
+    return saveProduct(seller, active);
+  }
+
+  private Product saveProduct(User seller, boolean active) {
     Category category = saveCategory();
     Product product = Product.createNew(
         seller.getId(),

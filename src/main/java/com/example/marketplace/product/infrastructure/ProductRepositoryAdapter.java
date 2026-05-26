@@ -1,5 +1,6 @@
 package com.example.marketplace.product.infrastructure;
 
+import com.example.marketplace.common.pagination.PageRequest;
 import com.example.marketplace.product.domain.Product;
 import com.example.marketplace.product.domain.ProductRepository;
 import com.example.marketplace.product.domain.ProductStatus;
@@ -38,15 +39,25 @@ class ProductRepositoryAdapter implements ProductRepository {
   }
 
   @Override
-  public Flux<Product> findAllActive() {
-    return repository.findByStatus(ProductStatus.ACTIVE.name())
+  public Flux<Product> findAllActive(PageRequest pageRequest) {
+    return repository.findByStatus(ProductStatus.ACTIVE.name(), pageRequest.limit(), pageRequest.offset())
         .map(this::toDomain);
   }
 
   @Override
-  public Flux<Product> findBySellerId(UUID sellerId) {
-    return repository.findBySellerId(sellerId)
+  public Mono<Long> countAllActive() {
+    return repository.countByStatus(ProductStatus.ACTIVE.name());
+  }
+
+  @Override
+  public Flux<Product> findBySellerId(UUID sellerId, PageRequest pageRequest) {
+    return repository.findBySellerId(sellerId, pageRequest.limit(), pageRequest.offset())
         .map(this::toDomain);
+  }
+
+  @Override
+  public Mono<Long> countBySellerId(UUID sellerId) {
+    return repository.countBySellerId(sellerId);
   }
 
   @Override

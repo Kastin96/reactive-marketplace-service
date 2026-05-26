@@ -1,8 +1,11 @@
 package com.example.marketplace.product.api;
 
+import com.example.marketplace.common.pagination.PageRequest;
+import com.example.marketplace.common.pagination.PageResponse;
 import com.example.marketplace.config.OpenApiConfig;
 import com.example.marketplace.product.application.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -14,9 +17,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
@@ -55,21 +58,31 @@ public class ProductController {
   @GetMapping("/api/v1/seller/products")
   @Operation(
       summary = "List own products",
-      description = "Requires SELLER role.",
+      description = "Requires SELLER role. Returns a paged response ordered by newest product first.",
       security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH_SCHEME)
   )
-  public Flux<ProductResponse> getCurrentSellerProducts() {
-    return productService.getCurrentSellerProducts();
+  public Mono<PageResponse<ProductResponse>> getCurrentSellerProducts(
+      @Parameter(description = "Zero-based page index.", example = "0")
+      @RequestParam(defaultValue = PageRequest.DEFAULT_PAGE_VALUE) int page,
+      @Parameter(description = "Page size from 1 to 100.", example = "20")
+      @RequestParam(defaultValue = PageRequest.DEFAULT_SIZE_VALUE) int size
+  ) {
+    return productService.getCurrentSellerProducts(pageRequest(page, size));
   }
 
   @GetMapping("/api/v1/products")
   @Operation(
       summary = "List active products",
-      description = "Requires authenticated CUSTOMER, SELLER, or ADMIN user.",
+      description = "Requires authenticated CUSTOMER, SELLER, or ADMIN user. Returns a paged response ordered by newest product first.",
       security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH_SCHEME)
   )
-  public Flux<ProductResponse> getActiveProducts() {
-    return productService.getActiveProducts();
+  public Mono<PageResponse<ProductResponse>> getActiveProducts(
+      @Parameter(description = "Zero-based page index.", example = "0")
+      @RequestParam(defaultValue = PageRequest.DEFAULT_PAGE_VALUE) int page,
+      @Parameter(description = "Page size from 1 to 100.", example = "20")
+      @RequestParam(defaultValue = PageRequest.DEFAULT_SIZE_VALUE) int size
+  ) {
+    return productService.getActiveProducts(pageRequest(page, size));
   }
 
   @GetMapping("/api/v1/products/{productId}")
@@ -100,5 +113,9 @@ public class ProductController {
   )
   public Mono<ProductResponse> deactivateProduct(@PathVariable UUID productId) {
     return productService.deactivateProduct(productId);
+  }
+
+  private PageRequest pageRequest(int page, int size) {
+    return PageRequest.of(page, size);
   }
 }

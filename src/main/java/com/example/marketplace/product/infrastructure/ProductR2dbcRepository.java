@@ -11,9 +11,27 @@ import java.util.UUID;
 
 interface ProductR2dbcRepository extends ReactiveCrudRepository<ProductEntity, UUID> {
 
-  Flux<ProductEntity> findByStatus(String status);
+  @Query("""
+      SELECT *
+      FROM products
+      WHERE status = :status
+      ORDER BY created_at DESC, id DESC
+      LIMIT :limit OFFSET :offset
+      """)
+  Flux<ProductEntity> findByStatus(String status, int limit, long offset);
 
-  Flux<ProductEntity> findBySellerId(UUID sellerId);
+  Mono<Long> countByStatus(String status);
+
+  @Query("""
+      SELECT *
+      FROM products
+      WHERE seller_id = :sellerId
+      ORDER BY created_at DESC, id DESC
+      LIMIT :limit OFFSET :offset
+      """)
+  Flux<ProductEntity> findBySellerId(UUID sellerId, int limit, long offset);
+
+  Mono<Long> countBySellerId(UUID sellerId);
 
   @Modifying
   @Query("""

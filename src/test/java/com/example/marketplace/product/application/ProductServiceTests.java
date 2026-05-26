@@ -4,6 +4,7 @@ import com.example.marketplace.category.domain.Category;
 import com.example.marketplace.category.domain.CategoryRepository;
 import com.example.marketplace.common.exception.CategoryNotFoundException;
 import com.example.marketplace.common.exception.ProductAccessDeniedException;
+import com.example.marketplace.common.pagination.PageRequest;
 import com.example.marketplace.product.api.CreateProductRequest;
 import com.example.marketplace.product.api.UpdateProductRequest;
 import com.example.marketplace.product.domain.Product;
@@ -158,10 +159,20 @@ class ProductServiceTests {
   void activeProductListingReturnsActiveProducts() {
     Product activeProduct = draftProduct();
     activeProduct.activate();
-    when(productRepository.findAllActive()).thenReturn(Flux.just(activeProduct));
+    PageRequest pageRequest = PageRequest.of(0, 20);
+    when(productRepository.findAllActive(pageRequest)).thenReturn(Flux.just(activeProduct));
+    when(productRepository.countAllActive()).thenReturn(Mono.just(1L));
 
-    StepVerifier.create(productService.getActiveProducts())
-        .assertNext(response -> assertThat(response.status()).isEqualTo(ProductStatus.ACTIVE))
+    StepVerifier.create(productService.getActiveProducts(pageRequest))
+        .assertNext(response -> {
+          assertThat(response.content()).hasSize(1);
+          assertThat(response.content().getFirst().status()).isEqualTo(ProductStatus.ACTIVE);
+          assertThat(response.page()).isZero();
+          assertThat(response.size()).isEqualTo(20);
+          assertThat(response.totalElements()).isEqualTo(1);
+          assertThat(response.totalPages()).isEqualTo(1);
+          assertThat(response.last()).isTrue();
+        })
         .verifyComplete();
   }
 

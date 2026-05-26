@@ -1,5 +1,6 @@
 package com.example.marketplace.order.infrastructure;
 
+import com.example.marketplace.common.pagination.PageRequest;
 import com.example.marketplace.order.domain.Order;
 import com.example.marketplace.order.domain.OrderItem;
 import com.example.marketplace.order.domain.OrderRepository;
@@ -46,23 +47,36 @@ class OrderRepositoryAdapter implements OrderRepository {
   }
 
   @Override
-  public Flux<Order> findByCustomerId(UUID customerId) {
-    return orderRepository.findByCustomerId(customerId)
+  public Flux<Order> findByCustomerId(UUID customerId, PageRequest pageRequest) {
+    return orderRepository.findByCustomerId(customerId, pageRequest.limit(), pageRequest.offset())
         .flatMap(this::withItems);
   }
 
   @Override
-  public Flux<Order> findBySellerId(UUID sellerId) {
-    return orderItemRepository.findBySellerId(sellerId)
-        .map(OrderItemEntity::orderId)
-        .distinct()
-        .flatMap(this::findById);
+  public Mono<Long> countByCustomerId(UUID customerId) {
+    return orderRepository.countByCustomerId(customerId);
   }
 
   @Override
-  public Flux<Order> findAll() {
-    return orderRepository.findAll()
+  public Flux<Order> findBySellerId(UUID sellerId, PageRequest pageRequest) {
+    return orderRepository.findBySellerId(sellerId, pageRequest.limit(), pageRequest.offset())
         .flatMap(this::withItems);
+  }
+
+  @Override
+  public Mono<Long> countBySellerId(UUID sellerId) {
+    return orderRepository.countBySellerId(sellerId);
+  }
+
+  @Override
+  public Flux<Order> findAll(PageRequest pageRequest) {
+    return orderRepository.findAll(pageRequest.limit(), pageRequest.offset())
+        .flatMap(this::withItems);
+  }
+
+  @Override
+  public Mono<Long> countAll() {
+    return orderRepository.count();
   }
 
   private Mono<Order> withItems(OrderEntity orderEntity) {

@@ -3,6 +3,7 @@ package com.example.marketplace.product.infrastructure;
 import com.example.marketplace.PostgresTestContainerConfig;
 import com.example.marketplace.category.domain.Category;
 import com.example.marketplace.category.domain.CategoryRepository;
+import com.example.marketplace.common.pagination.PageRequest;
 import com.example.marketplace.product.domain.Product;
 import com.example.marketplace.product.domain.ProductRepository;
 import com.example.marketplace.product.domain.ProductStatus;
@@ -82,7 +83,7 @@ class ProductRepositoryIntegrationTests {
 
     StepVerifier.create(productRepository.save(activeProduct)
             .then(productRepository.save(inactiveProduct))
-            .thenMany(productRepository.findAllActive().filter(product ->
+            .thenMany(productRepository.findAllActive(PageRequest.of(0, 20)).filter(product ->
                 product.getId().equals(activeProduct.getId()) || product.getId().equals(inactiveProduct.getId())
             )))
         .assertNext(found -> {
@@ -96,10 +97,21 @@ class ProductRepositoryIntegrationTests {
   void findProductsBySellerId() {
     Product product = newProduct();
 
-    StepVerifier.create(productRepository.save(product).thenMany(productRepository.findBySellerId(product.getSellerId())))
+    StepVerifier.create(productRepository.save(product)
+            .thenMany(productRepository.findBySellerId(product.getSellerId(), PageRequest.of(0, 20))))
         .expectNextMatches(found -> found.getId().equals(product.getId()))
         .thenCancel()
         .verify();
+  }
+
+  @Test
+  void countActiveProducts() {
+    Product product = newProduct();
+    product.activate();
+
+    StepVerifier.create(productRepository.save(product).then(productRepository.countAllActive()))
+        .assertNext(count -> assertThat(count).isGreaterThanOrEqualTo(1))
+        .verifyComplete();
   }
 
   @Test
