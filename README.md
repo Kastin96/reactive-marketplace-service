@@ -2,88 +2,87 @@
 
 [![CI](https://github.com/Kastin96/reactive-marketplace-service/actions/workflows/ci.yml/badge.svg)](https://github.com/Kastin96/reactive-marketplace-service/actions/workflows/ci.yml)
 
-Reactive Marketplace Service is a compact Spring Boot backend for a small online marketplace. It is intended as a
-portfolio project that demonstrates clean Java backend structure, reactive persistence, JWT authentication, role-based
-access control, Flyway migrations, and tests.
+Reactive Marketplace Service is a Spring Boot backend for core marketplace operations: account registration, JWT
+authentication, category management, seller product management, product discovery, and order processing.
 
-The project intentionally focuses on core marketplace flows: users, authentication, categories, products, and orders. It
-does not try to be a full e-commerce platform.
+The service is intentionally scoped to backend workflows that need clear security boundaries, transactional data access,
+database migrations, API contracts, and automated verification.
 
-## Tech Stack
+## Capabilities
+
+- Register and authenticate customers and sellers.
+- Issue JWT access tokens and authenticate WebFlux requests with a stateless security filter.
+- Reject blocked users even when they present a valid token.
+- Enforce role-based access for customer, seller, and admin APIs.
+- Manage categories through admin endpoints.
+- Let sellers create, update, and list their own products.
+- Let admins activate and deactivate products.
+- Expose paged product and order list endpoints.
+- Create customer orders from active products.
+- Reserve product stock atomically during order creation.
+- Calculate order totals on the backend.
+- Store product name, price, and seller snapshots in order items.
+- Let customers view and cancel their own orders.
+- Let sellers view orders containing their products.
+- Let admins list all orders and update order status.
+
+## Technology
 
 - Java 21
 - Gradle
 - Spring Boot
 - Spring WebFlux
 - Spring Security
-- JWT authentication
+- JWT
 - PostgreSQL
 - Spring Data R2DBC
 - Flyway
 - Spring Boot Actuator
+- Springdoc OpenAPI
 - Jakarta Bean Validation
 - JUnit 5
 - Mockito
 - WebTestClient
 - Testcontainers PostgreSQL
+- Docker Compose
+- GitHub Actions
 
-## Main Features
+## Roles
 
-- Register and login customers and sellers.
-- Store passwords as BCrypt hashes.
-- Issue JWT access tokens.
-- Authenticate protected APIs with a WebFlux-native JWT filter.
-- Reject blocked users even when they have a valid JWT.
-- Enforce role-based access control.
-- Manage categories as an admin.
-- Allow sellers to create and manage their own products.
-- Allow admins to activate and deactivate products.
-- Show only active products through shared product read endpoints.
-- Allow customers to create orders from active products.
-- Calculate order totals on the backend.
-- Store product price, name, and seller snapshots in order items.
-- Decrease stock when an order is created.
-- Allow customers to view and cancel their own orders.
-- Allow sellers to view orders containing their products.
-- Allow admins to view all orders and update order status.
+`CUSTOMER`
 
-## Roles And Permissions
+- Read active products and categories.
+- Create orders.
+- View own orders.
+- Cancel own orders before shipment.
 
-- `CUSTOMER`
-    - Read active products and categories.
-    - Create orders.
-    - View own orders.
-    - Cancel own orders before shipped.
+`SELLER`
 
-- `SELLER`
-    - Read active products and categories.
-    - Create and update own products.
-    - View own products.
-    - View orders containing their products.
+- Read active products and categories.
+- Create and update own products.
+- View own products.
+- View orders containing their products.
 
-- `ADMIN`
-    - Manage categories.
-    - Activate or deactivate products.
-    - View all orders.
-    - Update order status.
+`ADMIN`
 
-## Architecture Overview
+- Manage categories.
+- Activate and deactivate products.
+- View all orders.
+- Update order status.
 
-The codebase uses module-oriented packages. Each business module keeps HTTP DTOs, application services, domain models,
-and persistence adapters separated.
+## Architecture
 
-Controllers stay thin and delegate business decisions to services and domain models. Persistence details stay in
-infrastructure adapters. API responses use DTO records and do not expose persistence entities.
+The codebase uses module-oriented packages. Business modules keep HTTP DTOs, application services, domain models, and
+persistence adapters separated.
 
-## Package Structure
+Controllers expose API contracts and delegate business decisions to application services. Domain models own state
+transitions and invariants. Infrastructure adapters isolate R2DBC persistence details from the rest of the application.
 
 ```text
 com.example.marketplace
   auth
     api
     application
-    domain
-    infrastructure
   category
     api
     application
@@ -108,12 +107,11 @@ com.example.marketplace
   config
   common
     exception
-    mapper
-    validation
+    pagination
     web
 ```
 
-## Database Tables
+## Database
 
 Flyway migration `V1__create_initial_schema.sql` creates:
 
@@ -123,22 +121,44 @@ Flyway migration `V1__create_initial_schema.sql` creates:
 - `orders`
 - `order_items`
 
-The application uses R2DBC for runtime database access and Flyway over JDBC for migrations.
+The application uses R2DBC for runtime database access and Flyway over JDBC for schema migrations.
 
-## Run PostgreSQL
+Already-applied Flyway migrations should not be edited for shared or production-like databases. Add a new `V2__...sql`
+migration for schema changes. For local Docker volumes, use `docker compose down -v` when you intentionally want a fresh
+database.
 
-Start only the local database with Docker Compose:
+## API Documentation
 
-```bash
-docker compose up -d postgres
+OpenAPI is available when the application is running:
+
+- `GET /v3/api-docs`
+- `GET /swagger-ui.html`
+
+Protected endpoints use the `bearerAuth` JWT security scheme.
+
+## Pagination
+
+List endpoints use `page` and `size` query parameters:
+
+```text
+GET /api/v1/products?page=0&size=20
+GET /api/v1/customer/orders?page=0&size=20
 ```
 
-Default local credentials from `docker-compose.yml`:
+Paged responses use this shape:
 
-- database: `reactive_marketplace`
-- user: `marketplace`
-- password: `marketplace`
-- port: `5432`
+```json
+{
+  "content": [],
+  "page": 0,
+  "size": 20,
+  "totalElements": 0,
+  "totalPages": 0,
+  "last": true
+}
+```
+
+`size` must be between `1` and `100`.
 
 ## Run With Docker Compose
 
@@ -150,25 +170,51 @@ docker compose up --build
 
 The API is available at `http://localhost:8080`.
 
-To reset the local Compose database volume:
+Stop the stack:
+
+```bash
+docker compose down
+```
+
+Reset the local Compose database volume:
 
 ```bash
 docker compose down -v
 ```
 
-## Run The Application
+## Run PostgreSQL Only
+
+Start only the local database:
 
 ```bash
-./gradlew bootRun
+docker compose up -d postgres
 ```
 
-On Windows PowerShell:
+Default local credentials:
+
+- database: `reactive_marketplace`
+- user: `marketplace`
+- password: `marketplace`
+- port: `5432`
+
+## Run Locally
+
+Bash:
+
+```bash
+SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
+```
+
+Windows PowerShell:
 
 ```powershell
+$env:SPRING_PROFILES_ACTIVE='local'
 .\gradlew bootRun
 ```
 
 The service starts on port `8080` by default.
+
+Outside `local` and `test` profiles, the application fails fast if the default local JWT secret is used.
 
 ## Run Tests
 
@@ -178,11 +224,11 @@ Tests use Testcontainers PostgreSQL for integration coverage:
 ./gradlew test
 ```
 
-Docker must be available for the Testcontainers-backed tests.
+Docker must be available for Testcontainers-backed tests.
 
-## Environment Variables
+## Configuration
 
-The application is configured through safe local defaults and can be overridden with environment variables:
+The application is configured through environment variables:
 
 ```text
 SERVER_PORT=8080
@@ -200,8 +246,8 @@ JWT_SECRET=change-me-for-local-development-only
 JWT_EXPIRATION=15m
 ```
 
-Use a strong private `JWT_SECRET` outside local development.
-The application fails fast outside the `local` and `test` profiles when the default local JWT secret is used.
+Use a strong private `JWT_SECRET` outside local development. The default local secret is allowed only in `local` and
+`test` profiles.
 
 ## Example Requests
 
@@ -276,12 +322,14 @@ curl -X POST http://localhost:8080/api/v1/customer/orders \
   }'
 ```
 
-## Actuator
+## Operations
 
 Public actuator endpoints:
 
 - `GET /actuator/health`
 - `GET /actuator/info`
+
+CI runs `./gradlew test` on pushes and pull requests to `main`.
 
 ## Error Responses
 
@@ -303,9 +351,9 @@ API errors use a consistent JSON shape:
 }
 ```
 
-## Intentionally Not Included
+## Service Boundaries
 
-The project intentionally excludes:
+The service does not include:
 
 - payments
 - cart
