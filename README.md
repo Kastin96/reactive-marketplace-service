@@ -1,5 +1,7 @@
 # reactive-marketplace-service
 
+[![CI](https://github.com/Kastin96/reactive-marketplace-service/actions/workflows/ci.yml/badge.svg)](https://github.com/Kastin96/reactive-marketplace-service/actions/workflows/ci.yml)
+
 Reactive Marketplace Service is a compact Spring Boot backend for a small online marketplace. It is intended as a
 portfolio project that demonstrates clean Java backend structure, reactive persistence, JWT authentication, role-based
 access control, Flyway migrations, and tests.
