@@ -28,7 +28,7 @@ database migrations, API contracts, and automated verification.
 
 ## Technology
 
-- Java 21
+- Java 25
 - Gradle
 - Spring Boot
 - Spring WebFlux
